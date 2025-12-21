@@ -21,11 +21,21 @@ function WorldUtils.clearWorld(world)
 end
 
 function WorldUtils.playerFilter(item, other)
-    if other.type == "door" then
+    if other.type == "door" or other.type == "enemy" then
         return "cross"
     end
 
     return "slide"
+end
+
+function WorldUtils.enemyFilter(item, other)
+    if other.type == "player" then
+        return "cross" -- On passe à travers le joueur, mais Bump enregistre la collision
+    elseif other.type == "enemy" then
+        return "slide" -- Optionnel : les ennemis se bloquent entre eux
+    end
+
+    return "slide" -- Bloqué par le reste
 end
 
 return WorldUtils

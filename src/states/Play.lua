@@ -40,6 +40,11 @@ function Play:update(dt)
     -- Update player logic (movement + collisions)
     self.player:update(dt, self.world)
 
+    -- Update des ennemis
+    for _, enemy in ipairs(self.room.enemies) do
+        enemy:update(dt, self.player) -- On leur donne accès au joueur pour l'IA
+    end
+
     local targetX = self.player.x + self.player.w / 2
     local targetY = self.player.y + self.player.h / 2
     self.cam:lookAt(targetX, targetY)

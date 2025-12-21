@@ -10,6 +10,7 @@ function Room:new(world, baseSeed, level)
     self.world = world
     self.level = level
     self.walls = {}
+    self.enemies = {}
 
     -- On crée une seed unique pour cette salle précise
     -- Ainsi, la salle 1 est toujours la même, la 2 aussi, etc.
@@ -80,6 +81,11 @@ function Room:generate(entrySide)
     local exitSide = possibleSides[self.rng:random(1, #possibleSides)]
     local sx, sy = self:calculateDoorPos(exitSide)
     self.door = LevelDoor(self.world, sx, sy, exitSide)
+
+    -- Enemies
+    local Chaser = require "src.entities.enemies.Chaser"
+    -- On en spawn un au hasard pour tester
+    table.insert(self.enemies, Chaser(self.world, self.x + 100, self.y + 100))
 end
 
 function Room:draw()
@@ -96,6 +102,11 @@ function Room:draw()
     -- Doors
     if self.entryDoor then self.entryDoor:draw() end
     if self.door then self.door:draw() end
+
+    -- Enemies
+    for _, enemy in ipairs(self.enemies) do
+        enemy:draw()
+    end
 end
 
 function Room:calculateDoorPos(side)
