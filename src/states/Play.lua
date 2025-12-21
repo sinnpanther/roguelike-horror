@@ -1,5 +1,6 @@
 -- Requirements
 local Camera = require "libs.hump.camera"
+local Vector = require "libs.hump.vector"
 
 local Play = {}
 local Player = require "src.entities.Player"
@@ -17,7 +18,7 @@ function Play:enter()
 
     -- On génère la seed une seule fois
     self.seed = MathUtils.generateBase36Seed(8)
-    self.numericSeed = MathUtils.hashString(self.seed)
+    self.numericSeed = MathUtils.hashString("CPGMDDHP")
 
     DEBUG_CURRENT_SEED = self.seed
     DEBUG_CURRENT_LEVEL = self.level
@@ -27,8 +28,7 @@ function Play:enter()
     self.room:generate()
 
     -- On place le joueur au milieu de cette salle
-    self.player = Player(self.room.x + self.room.width/2, self.room.y + self.room.height/2)
-    self.world:add(self.player, self.player.x, self.player.y, self.player.w, self.player.h)
+    self.player = Player(self.world, self.room.x + self.room.width/2, self.room.y + self.room.height/2)
 
     -- HUD
     self.hud = HUD(self.player)
@@ -82,28 +82,44 @@ function Play:nextLevel()
     local opposite = {north="south", south="north", east="west", west="east"}
     local entrySide = opposite[exitSide]
 
-    -- 1. NETTOYAGE TOTAL (Murs, Portes, futurs Ennemis...)
+    -- 1. NETTOYAGE (On vide le monde Bump avant de recréer la salle)
     WorldUtils.clearWorld(self.world)
 
-    -- 2. GÉNÉRATION
+    -- 2. GÉNÉRATION DE LA NOUVELLE SALLE
     self.level = self.level + 1
     self.room = Room(self.world, self.numericSeed, self.level)
     self.room:generate(entrySide)
 
-    -- Repositionnement du joueur à l'OPPOSÉ
+    -- 3. REPOSITIONNEMENT DU JOUEUR (Opti de pro avec HUMP Vector)
     local margin = 60
-    if exitSide == "north" then -- Sorti par le haut -> Arrive par le bas
-        self.player.x, self.player.y = self.room.x + self.room.width/2, self.room.y + self.room.height - margin
-    elseif exitSide == "south" then -- Sorti par le bas -> Arrive par le haut
-        self.player.x, self.player.y = self.room.x + self.room.width/2, self.room.y + margin
-    elseif exitSide == "west" then -- Sorti par la gauche -> Arrive par la droite
-        self.player.x, self.player.y = self.room.x + self.room.width - margin, self.room.y + self.room.height/2
-    elseif exitSide == "east" then -- Sorti par la droite -> Arrive par la gauche
-        self.player.x, self.player.y = self.room.x + margin, self.room.y + self.room.height/2
+    local centerX = self.room.x + self.room.width / 2
+    local centerY = self.room.y + self.room.height / 2
+
+    -- Calcul des distances max depuis le centre
+    local offsetW = (self.room.width / 2) - margin
+    local offsetH = (self.room.height / 2) - margin
+
+    -- On crée un nouveau vecteur position basé sur le centre
+    local newPos = Vector(centerX, centerY)
+
+    if exitSide == "north" then     -- Sorti par le haut -> Arrive en bas
+        newPos.y = newPos.y + offsetH
+    elseif exitSide == "south" then -- Sorti par le bas -> Arrive en haut
+        newPos.y = newPos.y - offsetH
+    elseif exitSide == "west" then  -- Sorti par la gauche -> Arrive à droite
+        newPos.x = newPos.x + offsetW
+    elseif exitSide == "east" then  -- Sorti par la droite -> Arrive à gauche
+        newPos.x = newPos.x - offsetW
     end
 
-    self.player.hasReachedExit = false -- Très important pour ne pas boucler !
+    -- 4. SYNCHRONISATION TOTALE
+    MathUtils.updateCoordinates(self.player, newPos.x, newPos.y)
+
+    -- On téléporte physiquement le joueur dans le monde Bump (sans collision)
     self.world:update(self.player, self.player.x, self.player.y)
+
+    -- 5. RESET DES ÉTATS
+    self.player.hasReachedExit = false
 end
 
 function Play:keypressed(key)

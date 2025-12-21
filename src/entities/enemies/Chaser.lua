@@ -1,7 +1,9 @@
 -- Dependancies
 local Enemy = require "src.entities.enemies.Enemy"
+local Vector = require "libs.hump.vector"
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
+local MathUtils = require "src.utils.math_utils"
 
 local Chaser = Enemy:extend()
 
@@ -11,24 +13,22 @@ function Chaser:new(world, x, y)
 end
 
 function Chaser:update(dt, player)
-    -- 1. Calculer la direction vers le joueur
-    local dx = player.x - self.x
-    local dy = player.y - self.y
-    local distance = math.sqrt(dx*dx + dy*dy)
+    local pPos = Vector(player.x, player.y)
+    local ePos = self.pos -- Déjà un vecteur
 
-    -- 2. Normaliser le mouvement (pour ne pas aller plus vite en diagonale)
-    if distance > 0 then
-        self.vx = (dx / distance) * self.speed
-        self.vy = (dy / distance) * self.speed
-    end
+    -- 2. Calcul du vecteur de direction (Cible - Moi)
+    local diff = pPos - ePos
 
-    -- 3. Appliquer le mouvement avec Bump
-    local goalX = self.x + self.vx * dt
-    local goalY = self.y + self.vy * dt
+    -- 3. Mouvement : on normalise la direction et on applique la vitesse
+    -- .trimmed(1) gère le cas où l'ennemi est pile sur le joueur (distance 0)
+    local velocity = diff:trimmed(1) * self.speed * dt
+    local goal = ePos + velocity
 
-    local actualX, actualY, cols, len = self.world:move(self, goalX, goalY, WorldUtils.enemyFilter)
+    -- 4. On demande à Bump de gérer les collisions
+    local ax, ay, cols, len = self.world:move(self, goal.x, goal.y, WorldUtils.enemyFilter)
 
-    self.x, self.y = actualX, actualY
+    -- 5. Mise à jour des coordonnées
+    MathUtils.updateCoordinates(self, ax, ay)
 end
 
 return Chaser

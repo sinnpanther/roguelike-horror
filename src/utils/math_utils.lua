@@ -23,4 +23,11 @@ function MathUtils.hashString(str)
     return hash
 end
 
+function MathUtils.updateCoordinates(entity, x, y)
+    entity.pos.x = x
+    entity.pos.y = y
+    entity.x = x
+    entity.y = y
+end
+
 return MathUtils

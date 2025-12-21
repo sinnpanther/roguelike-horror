@@ -1,9 +1,11 @@
+local Vector = require "libs.hump.vector"
+
 local Enemy = Class:extend()
 
 function Enemy:new(world, x, y, hp, speed)
     self.world = world
-    self.x = x
-    self.y = y
+    self.x, self.y = x, y
+    self.pos = Vector(x, y)
     self.w = 32
     self.h = 32
     self.hp = hp or 3

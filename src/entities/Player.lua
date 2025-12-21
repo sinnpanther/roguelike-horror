@@ -1,11 +1,16 @@
+-- Dependancies
+local Vector = require "libs.hump.vector"
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
+local MathUtils = require "src.utils.math_utils"
 
 local Player = Class:extend()
 
-function Player:new(x, y)
+function Player:new(world, x, y)
+    self.world = world
     -- Initial position and dimensions
     self.x, self.y = x, y
+    self.pos = Vector(x, y)
     self.w, self.h = 32, 32 -- Rectangle size for collision
     self.type = "player"
 
@@ -16,34 +21,33 @@ function Player:new(x, y)
     self.fear = 0
     self.fearGain = 5
     self.lightRadius = 200 -- The size of our light circle
+
+    -- L'entité s'ajoute elle-même au monde
+    self.world:add(self, self.pos.x, self.pos.y, self.w, self.h)
 end
 
 function Player:update(dt, world)
-    local dx, dy = 0, 0
+    local dir = Vector(0, 0)
 
     -- Handle keyboard inputs (WASD / ZQSD support)
-    if love.keyboard.isDown("z") or love.keyboard.isDown("up") then dy = -1 end
-    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then dy = 1 end
-    if love.keyboard.isDown("q") or love.keyboard.isDown("left") then dx = -1 end
-    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dx = 1 end
+    if love.keyboard.isDown("z") or love.keyboard.isDown("up") then dir.y = dir.y - 1 end
+    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then dir.y = dir.y + 1 end
+    if love.keyboard.isDown("q") or love.keyboard.isDown("left") then dir.x = dir.x - 1 end
+    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dir.x = dir.x + 1 end
 
-    -- Normalize diagonal movement speed
-    -- This prevents the player from moving ~1.41x faster when holding two keys
-    if dx ~= 0 and dy ~= 0 then
-        local length = math.sqrt(dx^2 + dy^2)
-        dx = dx / length
-        dy = dy / length
-    end
+    -- 2. Normalisation et vitesse
+    -- .trimmed(1) est une super fonction de HUMP qui normalise seulement
+    -- si la longueur > 1 (évite les divisions par zéro et les bugs)
+    local velocity = dir:trimmed(1) * self.speed * dt
 
-    -- Calculate the desired target position
-    local goalX = self.x + dx * self.speed * dt
-    local goalY = self.y + dy * self.speed * dt
+    -- 3. Calcul de la destination
+    local goal = self.pos + velocity
 
-    -- Bump.lua movement: checks for collisions and returns the final allowed position
-    -- 'cols' contains all collision data (which wall was hit, from which side, etc.)
-    local actualX, actualY, cols, len = world:move(self, goalX, goalY, WorldUtils.playerFilter)
-    -- Update internal coordinates with the validated position
-    self.x, self.y = actualX, actualY
+    -- 4. Bump
+    local ax, ay, cols, len = world:move(self, goal.x, goal.y, WorldUtils.playerFilter)
+
+    -- 5. Mise à jour (on synchronise le vecteur et les variables x,y classiques)
+    MathUtils.updateCoordinates(self, ax, ay)
 
     --for i = 1, len do
     --    local col = cols[i]
