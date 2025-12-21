@@ -1,5 +1,10 @@
-local Room = Class:extend()
+-- Dependancies
+local LevelDoor = require "src.entities.doors.LevelDoor"
+local ClosedDoor = require "src.entities.doors.ClosedDoor"
+-- Utils
 local WorldUtils = require "src.utils.world_utils"
+
+local Room = Class:extend()
 
 function Room:new(world, baseSeed, level)
     self.world = world
@@ -17,11 +22,9 @@ function Room:new(world, baseSeed, level)
     -- On centre la salle sur l'écran (optionnel, selon ton choix de caméra)
     self.x = (love.graphics.getWidth() - self.width) / 2
     self.y = (love.graphics.getHeight() - self.height) / 2
-
-    self:generate()
 end
 
-function Room:generate()
+function Room:generate(entrySide)
     local t = 20 -- épaisseur des murs (thickness)
 
     -- Murs extérieurs (Bords de la salle)
@@ -54,6 +57,29 @@ function Room:generate()
             end
         end
     end
+
+    -- Door
+    -- 1. CALCUL DE LA PORTE D'ENTRÉE (FERMÉE)
+    if entrySide then
+        local ex, ey = self:calculateDoorPos(entrySide)
+        self.entryDoor = ClosedDoor(self.world, ex, ey, entrySide)
+    end
+
+    -- 2. CALCUL DE LA PORTE DE SORTIE (OUVERTE)
+    local sides = {"north", "south", "west", "east"}
+
+    -- On crée une liste de côtés possibles en enlevant celui d'entrée
+    local possibleSides = {}
+    for _, s in ipairs(sides) do
+        if s ~= entrySide then
+            table.insert(possibleSides, s)
+        end
+    end
+
+    -- On choisit parmi les côtés restants
+    local exitSide = possibleSides[self.rng:random(1, #possibleSides)]
+    local sx, sy = self:calculateDoorPos(exitSide)
+    self.door = LevelDoor(self.world, sx, sy, exitSide)
 end
 
 function Room:draw()
@@ -66,6 +92,24 @@ function Room:draw()
     for _, wall in ipairs(self.walls) do
         love.graphics.rectangle("fill", wall.x, wall.y, wall.w, wall.h)
     end
+
+    -- Doors
+    if self.entryDoor then self.entryDoor:draw() end
+    if self.door then self.door:draw() end
+end
+
+function Room:calculateDoorPos(side)
+    local dx, dy
+    if side == "north" then
+        dx, dy = self.x + (self.width / 2) - 20, self.y
+    elseif side == "south" then
+        dx, dy = self.x + (self.width / 2) - 20, self.y + self.height - 40
+    elseif side == "west" then
+        dx, dy = self.x, self.y + (self.height / 2) - 20
+    elseif side == "east" then
+        dx, dy = self.x + self.width - 40, self.y + (self.height / 2) - 20
+    end
+    return dx, dy
 end
 
 return Room

@@ -7,6 +7,7 @@ function Player:new(x, y)
     -- Initial position and dimensions
     self.x, self.y = x, y
     self.w, self.h = 32, 32 -- Rectangle size for collision
+    self.type = "player"
 
     -- Movement settings
     self.speed = 300
@@ -40,21 +41,28 @@ function Player:update(dt, world)
 
     -- Bump.lua movement: checks for collisions and returns the final allowed position
     -- 'cols' contains all collision data (which wall was hit, from which side, etc.)
-    local actualX, actualY, cols, len = world:move(self, goalX, goalY, "WorldUtils.playerFilter")
+    local actualX, actualY, cols, len = world:move(self, goalX, goalY, WorldUtils.playerFilter)
     -- Update internal coordinates with the validated position
     self.x, self.y = actualX, actualY
 
-    for i = 1, len do
-        local col = cols[i]
-        if col.other.isItem then
-            -- We touched an item!
-            self:pickup(col.other, world)
-        end
-    end
+    --for i = 1, len do
+    --    local col = cols[i]
+    --    if col.other.isItem then
+    --        -- We touched an item!
+    --        self:pickup(col.other, world)
+    --    end
+    --end
 
     -- Si le joueur ne bouge pas (dx et dy sont à 0), l'angoisse monte plus vite !
-    if dx == 0 and dy == 0 then
-        self.fear = math.min(100, self.fear + self.fearGain * dt)
+    --if dx == 0 and dy == 0 then
+    --    self.fear = math.min(100, self.fear + self.fearGain * dt)
+    --end
+
+    for i=1, len do
+        local col = cols[i]
+        if col.other.onInteract then
+            col.other:onInteract(self)
+        end
     end
 end
 

@@ -24,6 +24,7 @@ function Play:enter()
 
     -- On crée la première salle
     self.room = Room(self.world, self.numericSeed, self.level)
+    self.room:generate()
 
     -- On place le joueur au milieu de cette salle
     self.player = Player(self.room.x + self.room.width/2, self.room.y + self.room.height/2)
@@ -39,11 +40,15 @@ function Play:update(dt)
     -- Update player logic (movement + collisions)
     self.player:update(dt, self.world)
 
-    -- Smoothly follow the player with the camera
-    -- The third argument (0.1) adds a bit of "lag" for a smoother feel
     local targetX = self.player.x + self.player.w / 2
     local targetY = self.player.y + self.player.h / 2
     self.cam:lookAt(targetX, targetY)
+
+    if self.player.hasReachedExit then
+        self:nextLevel()
+
+        self.player.hasReachedExit = false
+    end
 end
 
 function Play:draw()
@@ -57,19 +62,42 @@ function Play:draw()
 
     -- Le HUD affiche les infos du niveau actuel
     self.hud:draw(self.level, self.seed)
+
+    -- DEBUG : affiche les hitboxes
+    --for _, item in ipairs(self.world:getItems()) do
+    --    local x, y, w, h = self.world:getRect(item)
+    --    love.graphics.setColor(1, 0, 0, 0.5) -- Rouge transparent
+    --    love.graphics.rectangle("line", x, y, w, h)
+    --end
+    --love.graphics.setColor(1, 1, 1)
 end
 
 function Play:nextLevel()
-    -- 1. On nettoie l'ancien monde
-    WorldUtils.clearWorld(self.world, self.room.walls)
+    local exitSide = self.player.lastExitSide
+    local opposite = {north="south", south="north", east="west", west="east"}
+    local entrySide = opposite[exitSide]
 
-    -- 2. On augmente le niveau et on crée la nouvelle salle
+    -- 1. NETTOYAGE TOTAL (Murs, Portes, futurs Ennemis...)
+    WorldUtils.clearWorld(self.world)
+
+    -- 2. GÉNÉRATION
     self.level = self.level + 1
     self.room = Room(self.world, self.numericSeed, self.level)
+    self.room:generate(entrySide)
 
-    -- 3. On replace le joueur (au centre de la nouvelle salle)
-    self.player.x = self.room.x + self.room.width/2
-    self.player.y = self.room.y + self.room.height/2
+    -- Repositionnement du joueur à l'OPPOSÉ
+    local margin = 60
+    if exitSide == "north" then -- Sorti par le haut -> Arrive par le bas
+        self.player.x, self.player.y = self.room.x + self.room.width/2, self.room.y + self.room.height - margin
+    elseif exitSide == "south" then -- Sorti par le bas -> Arrive par le haut
+        self.player.x, self.player.y = self.room.x + self.room.width/2, self.room.y + margin
+    elseif exitSide == "west" then -- Sorti par la gauche -> Arrive par la droite
+        self.player.x, self.player.y = self.room.x + self.room.width - margin, self.room.y + self.room.height/2
+    elseif exitSide == "east" then -- Sorti par la droite -> Arrive par la gauche
+        self.player.x, self.player.y = self.room.x + margin, self.room.y + self.room.height/2
+    end
+
+    self.player.hasReachedExit = false -- Très important pour ne pas boucler !
     self.world:update(self.player, self.player.x, self.player.y)
 end
 
