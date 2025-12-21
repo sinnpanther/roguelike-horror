@@ -7,7 +7,7 @@ end
 
 function Menu:keypressed(key)
     if key == "return" then
-        local Play = require "src.states.play"
+        local Play = require "src.states.Play"
         GameState.switch(Play)
     end
 end

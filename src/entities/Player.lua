@@ -1,3 +1,6 @@
+-- Utils
+local WorldUtils = require "src.utils.world_utils"
+
 local Player = Class:extend()
 
 function Player:new(x, y)
@@ -10,8 +13,8 @@ function Player:new(x, y)
 
     -- Horror mechanics initial state
     self.fear = 0
+    self.fearGain = 5
     self.lightRadius = 200 -- The size of our light circle
-    --self.sanity = 100
 end
 
 function Player:update(dt, world)
@@ -37,10 +40,31 @@ function Player:update(dt, world)
 
     -- Bump.lua movement: checks for collisions and returns the final allowed position
     -- 'cols' contains all collision data (which wall was hit, from which side, etc.)
-    local actualX, actualY, cols, len = world:move(self, goalX, goalY)
-
+    local actualX, actualY, cols, len = world:move(self, goalX, goalY, "WorldUtils.playerFilter")
     -- Update internal coordinates with the validated position
     self.x, self.y = actualX, actualY
+
+    for i = 1, len do
+        local col = cols[i]
+        if col.other.isItem then
+            -- We touched an item!
+            self:pickup(col.other, world)
+        end
+    end
+
+    -- Si le joueur ne bouge pas (dx et dy sont à 0), l'angoisse monte plus vite !
+    if dx == 0 and dy == 0 then
+        self.fear = math.min(100, self.fear + self.fearGain * dt)
+    end
+end
+
+function Player:pickup(item, world)
+    if item.type == "sedative" then
+        self.fear = math.max(0, self.fear - 30) -- Reduce fear by 30 points
+    end
+    -- Remove the item from the physical world so we don't pick it up twice
+    world:remove(item)
+    item.isPickedUp = true -- Mark it for removal from the draw list
 end
 
 function Player:draw()
