@@ -4,14 +4,17 @@ Bump = require "libs.bump"
 GameState = require "libs.hump.gamestate"
 
 -- State files
-local Menu = require "src.states.Menu"
+States = {
+    Menu = require "src.states.Menu",
+    Play = require "src.states.Play"
+}
 
 function love.load()
     -- Register basic callbacks (update, draw, etc.)
     GameState.registerEvents()
-    love.graphics.setDefaultFilter("nearest", "nearest")
+
     -- Run Menu
-    GameState.switch(Menu)
+    GameState.switch(States.Menu)
 end
 
 function love.keypressed(key)

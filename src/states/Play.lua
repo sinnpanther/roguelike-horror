@@ -18,7 +18,7 @@ function Play:enter()
 
     -- On génère la seed une seule fois
     self.seed = MathUtils.generateBase36Seed(8)
-    self.numericSeed = MathUtils.hashString("CPGMDDHP")
+    self.numericSeed = MathUtils.hashString(self.seed)
 
     DEBUG_CURRENT_SEED = self.seed
     DEBUG_CURRENT_LEVEL = self.level
