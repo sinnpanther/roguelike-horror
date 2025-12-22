@@ -34,11 +34,23 @@ function Play:enter()
     self.hud = HUD(self.player)
 
     self.cam = Camera(self.player.x, self.player.y)
+
+    -- Définition du stencil pour la lampe torche
+    self.flashlightStencil = function()
+        local cx = self.player.x + self.player.w / 2
+        local cy = self.player.y + self.player.h / 2
+
+        -- Cône de lumière (angle ~ 0.8 rad ≈ 45° de chaque côté)
+        love.graphics.arc("fill", cx, cy, 420, self.player.angle - 0.4, self.player.angle + 0.4, 36)
+
+        -- Petit halo serré autour du joueur
+        love.graphics.circle("fill", cx, cy, 40)
+    end
 end
 
 function Play:update(dt)
     -- Update player logic (movement + collisions)
-    self.player:update(dt, self.world)
+    self.player:update(dt)
 
     -- Update des ennemis
     for _, enemy in ipairs(self.room.enemies) do
@@ -57,13 +69,36 @@ function Play:update(dt)
 end
 
 function Play:draw()
-    -- 1. Tout ce qui est DANS le monde (Camera)
+    -- 1. On dessine d'abord le "noir" (bleuté très foncé) sur tout l'écran
+    love.graphics.clear(0, 0, 0)
+
+    -- Regard à travers la caméra
     self.cam:attach()
 
+    -- Dessine la pièce
     self.room:draw()
+    -- Dessine le joueur
     self.player:draw()
 
+
+    -- Stop du regard à travers la caméra
     self.cam:detach()
+
+    -- 2. On active le stencil
+    love.graphics.stencil(function()
+        -- On dessine la forme du faisceau dans l'espace caméra
+        self.cam:attach()
+        self.flashlightStencil()
+        self.cam:detach()
+    end, "replace", 1)
+    love.graphics.setStencilTest("equal", 0)
+
+    -- 3. On dessine le voile noir PAR-DESSUS tout,
+    -- sauf là où le stencil a marqué "1"
+    love.graphics.setStencilTest("less", 1)
+    love.graphics.setColor(0, 0, 0.02, 0.98) -- Noir bleuté très sombre
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    love.graphics.setStencilTest()
 
     -- Le HUD affiche les infos du niveau actuel
     self.hud:draw(self.level, self.seed)

@@ -6,7 +6,7 @@ end
 
 function HUD:draw(level, displaySeed)
     -- On affiche les infos en haut à gauche
-    love.graphics.setColor(1, 1, 1) -- Blanc
+    love.graphics.setColor(1, 1, 1, 1) -- Blanc
 
     -- Niveau actuel
     love.graphics.print("ETAGE : " .. level, 20, 20)

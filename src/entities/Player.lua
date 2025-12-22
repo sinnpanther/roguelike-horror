@@ -16,24 +16,31 @@ function Player:new(world, x, y)
 
     -- Movement settings
     self.speed = 300
+    self.angle = 0 -- Direction de la lampe
+    self.moveDir = Vector(0, 0)
 
-    -- Horror mechanics initial state
+    -- Horror mechanics
     self.fear = 0
     self.fearGain = 5
-    self.lightRadius = 200 -- The size of our light circle
 
     -- L'entité s'ajoute elle-même au monde
     self.world:add(self, self.pos.x, self.pos.y, self.w, self.h)
 end
 
-function Player:update(dt, world)
-    local dir = Vector(0, 0)
+function Player:update(dt)
+    local dir = self.moveDir
+    dir.x, dir.y = 0, 0
 
     -- Handle keyboard inputs (WASD / ZQSD support)
     if love.keyboard.isDown("z") or love.keyboard.isDown("up") then dir.y = dir.y - 1 end
     if love.keyboard.isDown("s") or love.keyboard.isDown("down") then dir.y = dir.y + 1 end
     if love.keyboard.isDown("q") or love.keyboard.isDown("left") then dir.x = dir.x - 1 end
     if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dir.x = dir.x + 1 end
+
+    -- Mise à jour de l'angle seulement si on bouge
+    if dir:len() > 0 then
+        self.angle = math.atan2(dir.y, dir.x)
+    end
 
     -- 2. Normalisation et vitesse
     -- .trimmed(1) est une super fonction de HUMP qui normalise seulement
@@ -44,7 +51,7 @@ function Player:update(dt, world)
     local goal = self.pos + velocity
 
     -- 4. Bump
-    local ax, ay, cols, len = world:move(self, goal.x, goal.y, WorldUtils.playerFilter)
+    local ax, ay, cols, len = self.world:move(self, goal.x, goal.y, WorldUtils.playerFilter)
 
     -- 5. Mise à jour (on synchronise le vecteur et les variables x,y classiques)
     MathUtils.updateCoordinates(self, ax, ay)
@@ -68,15 +75,6 @@ function Player:update(dt, world)
             col.other:onInteract(self)
         end
     end
-end
-
-function Player:pickup(item, world)
-    if item.type == "sedative" then
-        self.fear = math.max(0, self.fear - 30) -- Reduce fear by 30 points
-    end
-    -- Remove the item from the physical world so we don't pick it up twice
-    world:remove(item)
-    item.isPickedUp = true -- Mark it for removal from the draw list
 end
 
 function Player:draw()
