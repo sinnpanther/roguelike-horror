@@ -14,6 +14,8 @@ local MathUtils = require "src.utils.math_utils"
 
 function Play:enter()
     self.world = Bump.newWorld(64)
+    self.screenW = love.graphics.getWidth()
+    self.screenH = love.graphics.getHeight()
     self.level = 1
 
     -- On génère la seed une seule fois
@@ -35,17 +37,13 @@ function Play:enter()
 
     self.cam = Camera(self.player.x, self.player.y)
 
-    -- Définition du stencil pour la lampe torche
-    self.flashlightStencil = function()
-        local cx = self.player.x + self.player.w / 2
-        local cy = self.player.y + self.player.h / 2
-
-        -- Cône de lumière (angle ~ 0.8 rad ≈ 45° de chaque côté)
-        love.graphics.arc("fill", cx, cy, 420, self.player.angle - 0.4, self.player.angle + 0.4, 36)
-
-        -- Petit halo serré autour du joueur
-        love.graphics.circle("fill", cx, cy, 40)
-    end
+    self.flashlight = {
+        coneAngle = 0.45,  -- demi-angle du cône (en radians)
+        innerRadius = 30,  -- petit halo autour du joueur
+        outerRadius = 300, -- portée principale
+        flickerAmp = 5    -- amplitude max du flicker sur le rayon
+    }
+    self.flickerTime = 0  -- temps pour le bruit de Perlin
 end
 
 function Play:update(dt)
@@ -57,9 +55,11 @@ function Play:update(dt)
         enemy:update(dt, self.player) -- On leur donne accès au joueur pour l'IA
     end
 
-    local targetX = self.player.x + self.player.w / 2
-    local targetY = self.player.y + self.player.h / 2
-    self.cam:lookAt(targetX, targetY)
+    local pCenter = self.player:getCenter()
+    self.cam:lookAt(pCenter.x, pCenter.y)
+
+    -- Flicker plus rapide que le temps réel
+    self.flickerTime = self.flickerTime + dt
 
     if self.player.hasReachedExit then
         self:nextLevel()
@@ -80,17 +80,39 @@ function Play:draw()
     -- Dessine le joueur
     self.player:draw()
 
-
     -- Stop du regard à travers la caméra
     self.cam:detach()
 
     -- 2. On active le stencil
     love.graphics.stencil(function()
-        -- On dessine la forme du faisceau dans l'espace caméra
         self.cam:attach()
-        self.flashlightStencil()
+
+        local pCenter = self.player:getCenter()
+        local angle = self.player.angle or 0
+
+        -- --- FLICKER DU RAYON ---
+        -- n varie doucement entre 0 et 1
+        local n = love.math.noise(self.flickerTime, 0.0)
+        -- On le remappe en [-1, 1], puis on multiplie par l’amplitude
+        local radiusOffset = (n - 0.5) * 2 * self.flashlight.flickerAmp
+        local outerRadius = self.flashlight.outerRadius + radiusOffset
+
+        -- Cône principal de la lampe
+        love.graphics.arc(
+                "fill",
+                pCenter.x, pCenter.y,
+                outerRadius,
+                angle - self.flashlight.coneAngle,
+                angle + self.flashlight.coneAngle,
+                48
+        )
+
+        -- Petit halo proche du joueur
+        love.graphics.circle("fill", pCenter.x, pCenter.y, self.flashlight.innerRadius)
+
         self.cam:detach()
     end, "replace", 1)
+
     love.graphics.setStencilTest("equal", 0)
 
     -- 3. On dessine le voile noir PAR-DESSUS tout,
@@ -186,7 +208,7 @@ function Play:debug()
 
     -- Petit texte d'info en haut à gauche
     love.graphics.setColor(1, 1, 1)
-    love.graphics.print("DEBUG MODE - FPS: "..love.timer.getFPS(), 10, 10)
+    love.graphics.printf("DEBUG MODE - FPS: "..love.timer.getFPS(), 10, 10, self.screenW - 20, "right")
 end
 
 return Play

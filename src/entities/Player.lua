@@ -86,4 +86,11 @@ function Player:draw()
     love.graphics.setColor(1, 1, 1)
 end
 
+function Player:getCenter()
+    return {
+        x = self.x + self.w / 2,
+        y = self.y + self.h / 2
+    }
+end
+
 return Player
