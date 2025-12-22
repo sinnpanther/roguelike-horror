@@ -6,7 +6,8 @@ GameState = require "libs.hump.gamestate"
 -- State files
 States = {
     Menu = require "src.states.Menu",
-    Play = require "src.states.Play"
+    Play = require "src.states.Play",
+    Victory = require "src.states.Victory"
 }
 
 function love.load()

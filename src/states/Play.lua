@@ -139,6 +139,17 @@ function Play:draw()
 end
 
 function Play:nextLevel()
+    if self.level >= 10 then
+        -- On peut passer quelques infos de stats si besoin
+        local stats = {
+            seed  = self.seed,
+            level = self.level
+        }
+
+        GameState.switch(States.Victory, stats)
+        return
+    end
+
     local exitSide = self.player.lastExitSide
     local opposite = {north="south", south="north", east="west", west="east"}
     local entrySide = opposite[exitSide]
