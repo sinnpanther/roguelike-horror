@@ -16,11 +16,15 @@ function Room:new(world, baseSeed, level)
     -- Ainsi, la salle 1 est toujours la même, la 2 aussi, etc.
     self.rng = love.math.newRandomGenerator(baseSeed + level)
 
-    -- 1. On définit une taille de salle aléatoire
-    self.width = self.rng:random(600, 900)
-    self.height = self.rng:random(400, 700)
+    -- --- TAILLE SELON LE NIVEAU ---
+    local minW, maxW = 600, 900
+    local minH, maxH = 400, 700
 
-    -- On centre la salle sur l'écran (optionnel, selon ton choix de caméra)
+    local sizeBoost = math.min((level - 1) * 20, 150)
+    self.width  = self.rng:random(minW, maxW + sizeBoost)
+    self.height = self.rng:random(minH, maxH + sizeBoost)
+
+    -- On centre la salle sur l'écran
     self.x = (love.graphics.getWidth() - self.width) / 2
     self.y = (love.graphics.getHeight() - self.height) / 2
 end
@@ -34,7 +38,7 @@ function Room:generate(entrySide)
     WorldUtils.addWall(self.world, self.walls, self.x, self.y, t, self.height) -- Gauche
     WorldUtils.addWall(self.world, self.walls, self.x + self.width - t, self.y, t, self.height) -- Droite
 
-    -- 2. Configuration de la grille pour les piliers
+    -- Configuration de la grille pour les piliers
     local gridSize = 100 -- Distance entre deux emplacements de piliers
     local margin = 120   -- Distance minimale avec les murs extérieurs
 
@@ -42,12 +46,14 @@ function Room:generate(entrySide)
     local cols = math.floor((self.width - margin * 2) / gridSize)
     local rows = math.floor((self.height - margin * 2) / gridSize)
 
-    -- 3. On parcourt la grille
+    -- Chance de pilier par case (augmente un peu avec le niveau)
+    local baseChance = 15
+    local chance = math.min(baseChance + (self.level - 1) * 2, 35)
+
+    -- On parcourt la grille
     for c = 0, cols do
         for r = 0, rows do
-            -- On ne met pas un pilier partout !
-            -- On utilise le RNG pour décider (ex: 15% de chance par case)
-            if self.rng:random(1, 100) <= 15 then
+            if self.rng:random(1, 100) <= chance then
                 local pW, pH = 40, 40
 
                 -- Position alignée sur la grille
@@ -82,10 +88,19 @@ function Room:generate(entrySide)
     local sx, sy = self:calculateDoorPos(exitSide)
     self.door = LevelDoor(self.world, sx, sy, exitSide)
 
-    -- Enemies
+    -- --- NOMBRE D'ENNEMIS SELON LE NIVEAU ---
     local Chaser = require "src.entities.enemies.Chaser"
-    -- On en spawn un au hasard pour tester
-    table.insert(self.enemies, Chaser(self.world, self.x + 100, self.y + 100))
+
+    local maxPerRoom = 4
+    local enemyCount = math.min(1 + math.floor(self.level / 2), maxPerRoom)
+
+    for i = 1, enemyCount do
+        -- On les place un peu au hasard dans la salle, avec une marge pour éviter les murs
+        local eMargin = 80
+        local ex = self.rng:random(self.x + eMargin, self.x + self.width  - eMargin - 32)
+        local ey = self.rng:random(self.y + eMargin, self.y + self.height - eMargin - 32)
+        table.insert(self.enemies, Chaser(self.world, ex, ey))
+    end
 end
 
 function Room:draw()
