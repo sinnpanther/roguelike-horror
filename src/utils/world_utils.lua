@@ -8,7 +8,7 @@ function WorldUtils.addWall(world, wallList, x, y, w, h)
     return wall
 end
 
--- NOUVELLE FONCTION : Pour vider proprement la salle précédente
+-- Vider proprement la salle précédente
 function WorldUtils.clearWorld(world)
     local items = world:getItems()
     -- On boucle à l'envers pour éviter les problèmes d'index lors de la suppression

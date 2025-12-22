@@ -22,7 +22,7 @@ end
 DEBUG_CURRENT_SEED = "NONE"
 DEBUG_CURRENT_LEVEL = 1
 DEBUG_MODE = false
-FLASHLIGHT_ENABLED = true
+FLASHLIGHT_ENABLED = false
 
 -- Mode DEBUG F1 affiche les hitboxes et les radars
 function love.keypressed(key)
