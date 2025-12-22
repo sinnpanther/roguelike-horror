@@ -17,19 +17,24 @@ function love.load()
     GameState.switch(States.Menu)
 end
 
+-- DEBUG
+DEBUG_CURRENT_SEED = "NONE"
+DEBUG_CURRENT_LEVEL = 1
+DEBUG_MODE = false
+
+-- Mode DEBUG F1 affiche les hitboxes et les radars
 function love.keypressed(key)
-    -- This works everywhere in your game
+    -- On bascule le mode debug avec F1
+    if key == "f1" then
+        DEBUG_MODE = not DEBUG_MODE
+    end
+
     if key == "escape" then
         love.event.quit()
     end
 end
 
-
 -- Gestion des erreurs (ajout du niveau et de la seed)
--- On sauvegarde la fonction d'erreur originale de LÖVE
-DEBUG_CURRENT_SEED = "NONE"
-DEBUG_CURRENT_LEVEL = 1
-
 local function error_printer(msg, layer)
     print((debug.traceback("Error: " .. tostring(msg), 1 + (layer or 1)):gsub("\n[^\n]+$", "")))
 end

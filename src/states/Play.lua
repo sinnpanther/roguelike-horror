@@ -68,13 +68,9 @@ function Play:draw()
     -- Le HUD affiche les infos du niveau actuel
     self.hud:draw(self.level, self.seed)
 
-    -- DEBUG : affiche les hitboxes
-    --for _, item in ipairs(self.world:getItems()) do
-    --    local x, y, w, h = self.world:getRect(item)
-    --    love.graphics.setColor(1, 0, 0, 0.5) -- Rouge transparent
-    --    love.graphics.rectangle("line", x, y, w, h)
-    --end
-    --love.graphics.setColor(1, 1, 1)
+    if DEBUG_MODE then
+        self:debug()
+    end
 end
 
 function Play:nextLevel()
@@ -123,23 +119,39 @@ function Play:nextLevel()
 end
 
 function Play:keypressed(key)
-    -- 1. Check if the pressed key is 'r'
+    -- Reload
     if key == "r" then
-        -- 2. Tell GameState to switch to 'Play' again
-        -- This will call Play:enter() and reset everything
         GameState.switch(Play)
     end
 
-    -- 2. Next level
+    -- Next level
     if key == "n" then
         self:nextLevel()
     end
 
-    -- 3. Return to menu if Escape is pressed
+    -- Return to menu
     if key == "tab" then
         local Menu = require "src.states.Menu"
         GameState.switch(Menu)
     end
+end
+
+-- --- SECTION DEBUG GLOBALE ---
+function Play:debug()
+    love.graphics.setColor(0, 1, 1, 0.5) -- Cyan transparent
+
+    -- On récupère tous les objets enregistrés dans Bump
+    local items, len = self.world:getItems()
+    for i = 1, len do
+        local x, y, w, h = self.world:getRect(items[i])
+        love.graphics.rectangle("line", x, y, w, h)
+        -- On écrit le type d'objet à côté pour être sûr
+        love.graphics.print(items[i].type or "unknown", x, y - 15)
+    end
+
+    -- Petit texte d'info en haut à gauche
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.print("DEBUG MODE - FPS: "..love.timer.getFPS(), 10, 10)
 end
 
 return Play
