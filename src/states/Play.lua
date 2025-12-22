@@ -83,7 +83,18 @@ function Play:draw()
     -- Stop du regard à travers la caméra
     self.cam:detach()
 
-    -- 2. On active le stencil
+    if not FLASHLIGHT_ENABLED then
+        -- Le HUD affiche les infos du niveau actuel
+        self.hud:draw(self.level, self.seed)
+
+        if DEBUG_MODE then
+            self:debug()
+        end
+
+        return
+    end
+
+    -- 2. Active la lampe torche
     love.graphics.stencil(function()
         self.cam:attach()
 
@@ -121,9 +132,6 @@ function Play:draw()
     love.graphics.setColor(0, 0, 0.02, 0.98) -- Noir bleuté très sombre
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setStencilTest()
-
-    -- Le HUD affiche les infos du niveau actuel
-    self.hud:draw(self.level, self.seed)
 
     if DEBUG_MODE then
         self:debug()
