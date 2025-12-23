@@ -9,6 +9,7 @@ function Enemy:new(world, x, y, hp, speed)
     self.w = 32
     self.h = 32
     self.hp = hp or 3
+    self.maxHp = self.hp
     self.speed = speed or 100
     self.type = "enemy" -- Important pour WorldUtils.clearWorld !
 
@@ -31,9 +32,30 @@ function Enemy:update(dt, player)
 end
 
 function Enemy:draw()
-    -- Debug visuel : un rectangle rouge par défaut
+    -- Corps de l'ennemi
     love.graphics.setColor(1, 0, 0)
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+
+    -- --- BARRE DE VIE AU-DESSUS ---
+    if self.maxHp and self.maxHp > 0 then
+        local barWidth  = self.w
+        local barHeight = 4
+        local margin    = 3  -- espace entre le haut du sprite et la barre
+
+        local x = self.x
+        local y = self.y - barHeight - margin
+
+        -- Fond sombre
+        love.graphics.setColor(0, 0, 0, 0.7)
+        love.graphics.rectangle("fill", x, y, barWidth, barHeight)
+
+        -- Pourcentage de vie
+        local ratio = math.max(0, math.min(1, self.hp / self.maxHp))
+
+        -- Barre de vie (vert)
+        love.graphics.setColor(0.1, 0.8, 0.1, 1)
+        love.graphics.rectangle("fill", x, y, barWidth * ratio, barHeight)
+    end
 
     if DEBUG_MODE then
         self:debug()
