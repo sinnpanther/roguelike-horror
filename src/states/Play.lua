@@ -49,9 +49,11 @@ function Play:update(dt)
     -- Update player logic (movement + collisions + weapon)
     self.player:update(dt)
 
-    -- Update des ennemis
-    for _, enemy in ipairs(self.room.enemies) do
-        enemy:update(dt, self.player)
+    -- Update des ennemis (seulement si l'IA n'est pas figée)
+    if not FREEZE then
+        for _, enemy in ipairs(self.room.enemies) do
+            enemy:update(dt, self.player)
+        end
     end
 
     -- Nettoyage des ennemis morts
