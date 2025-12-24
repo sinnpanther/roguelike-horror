@@ -10,6 +10,7 @@ function Room:new(world, baseSeed, level)
     self.world = world
     self.level = level
     self.walls = {}
+    self.invisibleWalls = {}
     self.enemies = {}
     self.ts = TILE_SIZE
     self.side = nil
@@ -97,6 +98,53 @@ function Room:generate(entrySide)
                 WorldUtils.addWall(self.world, self.walls, x, y, self.ts, self.ts)
             end
         end
+    end
+
+    ----------------------------------------------------------------
+    -- 2bis) MURS INVISIBLES AUTOUR DE LA SALLE (ANNEAU DE SÉCURITÉ)
+    ----------------------------------------------------------------
+    do
+        local outer = self.ts -- épaisseur de la barrière extérieure
+
+        -- Haut extérieur
+        WorldUtils.addWall(
+                self.world,
+                self.invisibleWalls,
+                self.x - outer,
+                self.y - outer,
+                self.width + outer * 2,
+                outer
+        )
+
+        -- Bas extérieur
+        WorldUtils.addWall(
+                self.world,
+                self.invisibleWalls,
+                self.x - outer,
+                self.y + self.height,
+                self.width + outer * 2,
+                outer
+        )
+
+        -- Gauche extérieur
+        WorldUtils.addWall(
+                self.world,
+                self.invisibleWalls,
+                self.x - outer,
+                self.y,
+                outer,
+                self.height
+        )
+
+        -- Droite extérieur
+        WorldUtils.addWall(
+                self.world,
+                self.invisibleWalls,
+                self.x + self.width,
+                self.y,
+                outer,
+                self.height
+        )
     end
 
     ----------------------------------------------------------------
