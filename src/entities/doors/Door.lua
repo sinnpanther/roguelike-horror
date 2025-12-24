@@ -4,8 +4,8 @@ function Door:new(world, x, y, side, w, h)
     self.world = world
     self.x = x
     self.y = y
-    self.w = w or 40
-    self.h = h or 40
+    self.w = TILE_SIZE
+    self.h = TILE_SIZE
     self.side = side -- "north", "south", "east", or "west"
     self.type = "door"
 

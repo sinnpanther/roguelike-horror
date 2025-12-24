@@ -5,7 +5,7 @@ local Vector = require "libs.hump.vector"
 local Play = {}
 local Player = require "src.entities.Player"
 local HUD = require "src.ui.HUD"
-local Room = require "src.entities.Room"
+local Room = require "src.entities.rooms.Room"
 
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
@@ -152,37 +152,52 @@ function Play:nextLevel()
     end
 
     local exitSide = self.player.lastExitSide
-    local opposite = {north="south", south="north", east="west", west="east"}
+    local opposite = { north = "south", south = "north", east = "west", west = "east" }
     local entrySide = opposite[exitSide]
 
+    -- 1. Nettoyage complet de l'ancien monde
     WorldUtils.clearWorld(self.world)
 
+    -- 2. Nouvelle salle
     self.level = self.level + 1
     self.room = Room(self.world, self.numericSeed, self.level)
     self.room:generate(entrySide)
 
-    local margin = 60
-    local centerX = self.room.x + self.room.width / 2
-    local centerY = self.room.y + self.room.height / 2
+    -- 3. Repositionnement du joueur
+    local spawnX
+    local spawnY
 
-    local offsetW = (self.room.width / 2) - margin
-    local offsetH = (self.room.height / 2) - margin
+    local entryDoor = self.room.entryDoor
 
-    local newPos = Vector(centerX, centerY)
+    if entryDoor then
+        -- Cas normal : on a une porte d'entrée, on spawn juste dedans
+        spawnX = entryDoor.x
+        spawnY = entryDoor.y
 
-    if exitSide == "north" then
-        newPos.y = newPos.y + offsetH
-    elseif exitSide == "south" then
-        newPos.y = newPos.y - offsetH
-    elseif exitSide == "west" then
-        newPos.x = newPos.x + offsetW
-    elseif exitSide == "east" then
-        newPos.x = newPos.x - offsetW
+        if entrySide == "north" then
+            spawnX = entryDoor.x + entryDoor.w / 2 - self.player.w / 2
+            spawnY = entryDoor.y + entryDoor.h + 2
+        elseif entrySide == "south" then
+            spawnX = entryDoor.x + entryDoor.w / 2 - self.player.w / 2
+            spawnY = entryDoor.y - self.player.h - 2
+        elseif entrySide == "west" then
+            spawnX = entryDoor.x + entryDoor.w + 2
+            spawnY = entryDoor.y + entryDoor.h / 2 - self.player.h / 2
+        elseif entrySide == "east" then
+            spawnX = entryDoor.x - self.player.w - 2
+            spawnY = entryDoor.y + entryDoor.h / 2 - self.player.h / 2
+        end
+    else
+        -- Cas spécial : pas d'entrée (ex: première salle ou debug avec 'n')
+        -- -> on spawn au centre de la room
+        spawnX = self.room.x + self.room.width / 2  - self.player.w / 2
+        spawnY = self.room.y + self.room.height / 2 - self.player.h / 2
     end
 
-    MathUtils.updateCoordinates(self.player, newPos.x, newPos.y)
+    MathUtils.updateCoordinates(self.player, spawnX, spawnY)
     self.world:update(self.player, self.player.x, self.player.y)
 
+    -- 4. Reset des états liés à la transition
     self.player.hasReachedExit = false
 end
 

@@ -19,12 +19,6 @@ function love.load()
 end
 
 -- DEBUG
-DEBUG_CURRENT_SEED = "NONE"
-DEBUG_CURRENT_LEVEL = 1
-DEBUG_MODE = false
-FLASHLIGHT_ENABLED = false
-FREEZE = false
-
 function love.keypressed(key)
     -- Mode debug
     if key == "f1" then
