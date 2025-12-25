@@ -5,7 +5,8 @@ local Vector = require "libs.hump.vector"
 local Play = {}
 local Player = require "src.entities.Player"
 local HUD = require "src.ui.HUD"
-local Room = require "src.entities.rooms.Room"
+local Room = require "src.entities.map.room"
+local Level = require "src.entities.map.level"
 
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
@@ -15,18 +16,19 @@ function Play:enter()
     self.world = Bump.newWorld(64)
     self.screenW = love.graphics.getWidth()
     self.screenH = love.graphics.getHeight()
-    self.level = 1
+    self.levelIndex = 1
 
     -- On génère la seed une seule fois
     self.seed = MathUtils.generateBase36Seed(8)
     self.numericSeed = MathUtils.hashString(self.seed)
 
     DEBUG_CURRENT_SEED = self.seed
-    DEBUG_CURRENT_LEVEL = self.level
+    DEBUG_CURRENT_LEVEL = self.levelIndex
 
     -- On crée la première salle
-    self.room = Room(self.world, self.numericSeed, self.level)
-    self.room:generate()
+    self.level = Level(self.world, self.numericSeed, self.levelIndex)
+    self.level:generate()
+    self.room = self.level.mainRoom
 
     -- On place le joueur au milieu de cette salle
     self.player = Player(self.world, self.room.x + self.room.width/2, self.room.y + self.room.height/2)
@@ -92,7 +94,7 @@ function Play:draw()
 
     -- Si la lampe est désactivée : HUD + debug seulement
     if not FLASHLIGHT_ENABLED then
-        self.hud:draw(self.level, self.seed)
+        self.hud:draw(self.levelIndex, self.seed)
         if DEBUG_MODE then
             self:debug()
         end
@@ -134,7 +136,7 @@ function Play:draw()
     love.graphics.setColor(1, 1, 1)
 
     -- HUD
-    self.hud:draw(self.level, self.seed)
+    self.hud:draw(self.levelIndex, self.seed)
 
     if DEBUG_MODE then
         self:debug()
@@ -142,10 +144,10 @@ function Play:draw()
 end
 
 function Play:nextLevel()
-    if self.level >= 10 then
+    if self.levelIndex >= 10 then
         local stats = {
             seed  = self.seed,
-            level = self.level
+            levelIndex = self.levelIndex
         }
         GameState.switch(States.Victory, stats)
         return
@@ -159,8 +161,8 @@ function Play:nextLevel()
     WorldUtils.clearWorld(self.world)
 
     -- 2. Nouvelle salle
-    self.level = self.level + 1
-    self.room = Room(self.world, self.numericSeed, self.level)
+    self.levelIndex = self.levelIndex + 1
+    self.room = Room(self.world, self.numericSeed, self.levelIndex)
     self.room:generate(entrySide)
 
     -- 3. Repositionnement du joueur
