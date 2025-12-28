@@ -1,3 +1,5 @@
+-- src/states/Play.lua
+
 -- Requirements
 local Camera = require "libs.hump.camera"
 local Vector = require "libs.hump.vector"
@@ -5,65 +7,101 @@ local Vector = require "libs.hump.vector"
 local Play = {}
 local Player = require "src.entities.Player"
 local HUD = require "src.ui.HUD"
-local Room = require "src.entities.map.room"
 local Level = require "src.entities.map.level"
 
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
 local MathUtils = require "src.utils.math_utils"
 
+----------------------------------------------------------------
+-- Helpers
+----------------------------------------------------------------
+local function getRoomCenterPixels(room)
+    -- Cas "nouvelle Room" basée sur un rect en GRILLE (tiles)
+    -- On suppose : room.rect = { x, y, w, h } en tiles
+    -- => conversion en pixels via TILE_SIZE (ou room.ts)
+    local ts = TILE_SIZE
+
+    local cxTiles = room.rect.x + room.rect.w / 2
+    local cyTiles = room.rect.y + room.rect.h / 2
+
+    -- centre en pixels
+    return cxTiles * ts, cyTiles * ts
+end
+
+local function placePlayerAtRoomCenter(player, room)
+    local cx, cy = getRoomCenterPixels(room)
+
+    -- Player() prend souvent x/y en top-left, donc on centre correctement si possible
+    if player.w and player.h then
+        return cx - player.w / 2, cy - player.h / 2
+    end
+
+    return cx, cy
+end
+
+----------------------------------------------------------------
+-- State
+----------------------------------------------------------------
 function Play:enter()
     self.world = Bump.newWorld(64)
     self.screenW = love.graphics.getWidth()
     self.screenH = love.graphics.getHeight()
     self.levelIndex = 1
 
-    -- On génère la seed une seule fois
+    -- Seed unique pour toute la run
     self.seed = MathUtils.generateBase36Seed(8)
     self.numericSeed = MathUtils.hashString(self.seed)
 
     DEBUG_CURRENT_SEED = self.seed
     DEBUG_CURRENT_LEVEL = self.levelIndex
 
-    -- On crée la première salle
+    -- Génération du level
     self.level = Level(self.world, self.numericSeed, self.levelIndex)
     self.level:generate()
+
+    -- Room principale (celle où on démarre)
     self.room = self.level.mainRoom
 
-    -- On place le joueur au milieu de cette salle
-    self.player = Player(self.world, self.room.x + self.room.width/2, self.room.y + self.room.height/2)
+    -- Création du joueur puis placement au centre
+    local spawnX, spawnY = placePlayerAtRoomCenter({ w = 0, h = 0 }, self.room) -- dummy pour coords
+    self.player = Player(self.world, spawnX, spawnY)
 
-    -- HUD
+    -- Re-ajustement si Player définit w/h après construction
+    spawnX, spawnY = placePlayerAtRoomCenter(self.player, self.room)
+    MathUtils.updateCoordinates(self.player, spawnX, spawnY)
+    self.world:update(self.player, self.player.x, self.player.y)
+
+    -- HUD + Cam
     self.hud = HUD(self.player)
-
     self.cam = Camera(self.player.x, self.player.y)
 
     self.flashlight = {
-        coneAngle = 0.45,  -- demi-angle du cône (en radians)
-        innerRadius = 30,  -- petit halo autour du joueur
-        outerRadius = 300, -- portée principale
-        flickerAmp = 5     -- amplitude max du flicker sur le rayon
+        coneAngle = 0.45,
+        innerRadius = 30,
+        outerRadius = 300,
+        flickerAmp = 5
     }
-    self.flickerTime = 0  -- temps pour le bruit de Perlin
+    self.flickerTime = 0
 end
 
 function Play:update(dt)
-    -- Update player logic (movement + collisions + weapon)
+    -- Joueur
     self.player:update(dt)
 
-    -- Update des ennemis (seulement si l'IA n'est pas figée)
+    -- Ennemis : on délègue au Level (plutôt que self.room)
     if not FREEZE then
-        for _, enemy in ipairs(self.room.enemies) do
-            enemy:update(dt, self.player)
-        end
+        self.level:update(dt, self.player)
     end
 
-    -- Nettoyage des ennemis morts
-    for i = #self.room.enemies, 1, -1 do
-        local e = self.room.enemies[i]
-        if e.isDead then
-            self.world:remove(e)
-            table.remove(self.room.enemies, i)
+    -- Nettoyage des ennemis morts sur TOUTES les rooms du level
+    for _, seg in ipairs(self.level.segments or {}) do
+        for i = #seg.enemies, 1, -1 do
+            local e = seg.enemies[i]
+            if e.isDead then
+                self.world:remove(e)
+                table.remove(seg.enemies, i)
+            end
         end
     end
 
@@ -73,6 +111,7 @@ function Play:update(dt)
     -- Flicker
     self.flickerTime = self.flickerTime + dt
 
+    -- Transition (on abandonne les portes/sides pour l’instant)
     if self.player.hasReachedExit then
         self:nextLevel()
         self.player.hasReachedExit = false
@@ -80,19 +119,16 @@ function Play:update(dt)
 end
 
 function Play:draw()
-    -- 1. On dessine d'abord le fond noir
     love.graphics.clear(0, 0, 0)
 
-    -- Regard à travers la caméra
     self.cam:attach()
 
-    -- Dessine la pièce + ennemis + joueur (arme incluse dans Player:draw)
-    self.room:draw()
+    -- Draw : on dessine le Level entier (rooms + ennemis dans leurs draw)
+    self.level:draw(self.player)
     self.player:draw()
 
     self.cam:detach()
 
-    -- Si la lampe est désactivée : HUD + debug seulement
     if not FLASHLIGHT_ENABLED then
         self.hud:draw(self.levelIndex, self.seed)
         if DEBUG_MODE then
@@ -101,7 +137,7 @@ function Play:draw()
         return
     end
 
-    -- 2. Active la lampe torche (stencil)
+    -- Lampe torche (stencil)
     love.graphics.stencil(function()
         self.cam:attach()
 
@@ -113,12 +149,12 @@ function Play:draw()
         local outerRadius = self.flashlight.outerRadius + radiusOffset
 
         love.graphics.arc(
-            "fill",
-            pCenter.x, pCenter.y,
-            outerRadius,
-            angle - self.flashlight.coneAngle,
-            angle + self.flashlight.coneAngle,
-            48
+                "fill",
+                pCenter.x, pCenter.y,
+                outerRadius,
+                angle - self.flashlight.coneAngle,
+                angle + self.flashlight.coneAngle,
+                48
         )
 
         love.graphics.circle("fill", pCenter.x, pCenter.y, self.flashlight.innerRadius)
@@ -128,14 +164,12 @@ function Play:draw()
 
     love.graphics.setStencilTest("equal", 0)
 
-    -- 3. Voile sombre bleu sur tout l'écran, sauf dans le stencil
     love.graphics.setStencilTest("less", 1)
     love.graphics.setColor(0, 0, 0.02, 0.98)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setStencilTest()
     love.graphics.setColor(1, 1, 1)
 
-    -- HUD
     self.hud:draw(self.levelIndex, self.seed)
 
     if DEBUG_MODE then
@@ -146,87 +180,51 @@ end
 function Play:nextLevel()
     if self.levelIndex >= 10 then
         local stats = {
-            seed  = self.seed,
+            seed = self.seed,
             levelIndex = self.levelIndex
         }
         GameState.switch(States.Victory, stats)
         return
     end
 
-    local exitSide = self.player.lastExitSide
-    local opposite = { north = "south", south = "north", east = "west", west = "east" }
-    local entrySide = opposite[exitSide]
-
-    -- 1. Nettoyage complet de l'ancien monde
+    -- Nettoyage complet du monde
     WorldUtils.clearWorld(self.world)
 
-    -- 2. Nouvelle salle
+    -- Nouveau level
     self.levelIndex = self.levelIndex + 1
-    self.room = Room(self.world, self.numericSeed, self.levelIndex)
-    self.room:generate(entrySide)
+    DEBUG_CURRENT_LEVEL = self.levelIndex
 
-    -- 3. Repositionnement du joueur
-    local spawnX
-    local spawnY
+    self.level = Level(self.world, self.numericSeed, self.levelIndex)
+    self.level:generate()
+    self.room = self.level.mainRoom
 
-    local entryDoor = self.room.entryDoor
-
-    if entryDoor then
-        -- Cas normal : on a une porte d'entrée, on spawn juste dedans
-        spawnX = entryDoor.x
-        spawnY = entryDoor.y
-
-        if entrySide == "north" then
-            spawnX = entryDoor.x + entryDoor.w / 2 - self.player.w / 2
-            spawnY = entryDoor.y + entryDoor.h + 2
-        elseif entrySide == "south" then
-            spawnX = entryDoor.x + entryDoor.w / 2 - self.player.w / 2
-            spawnY = entryDoor.y - self.player.h - 2
-        elseif entrySide == "west" then
-            spawnX = entryDoor.x + entryDoor.w + 2
-            spawnY = entryDoor.y + entryDoor.h / 2 - self.player.h / 2
-        elseif entrySide == "east" then
-            spawnX = entryDoor.x - self.player.w - 2
-            spawnY = entryDoor.y + entryDoor.h / 2 - self.player.h / 2
-        end
-    else
-        -- Cas spécial : pas d'entrée (ex: première salle ou debug avec 'n')
-        -- -> on spawn au centre de la room
-        spawnX = self.room.x + self.room.width / 2  - self.player.w / 2
-        spawnY = self.room.y + self.room.height / 2 - self.player.h / 2
-    end
-
+    -- Repositionnement joueur au centre de la mainRoom
+    local spawnX, spawnY = placePlayerAtRoomCenter(self.player, self.room)
     MathUtils.updateCoordinates(self.player, spawnX, spawnY)
     self.world:update(self.player, self.player.x, self.player.y)
 
-    -- 4. Reset des états liés à la transition
     self.player.hasReachedExit = false
 end
 
 function Play:keypressed(key)
-    -- Reload
     if key == "r" then
         GameState.switch(Play)
     end
 
-    -- Next level
     if key == "n" then
         self:nextLevel()
     end
 
-    -- Attaque au couteau (arme actuelle)
     if key == "space" then
         self.player:attack()
     end
 
-    -- Return to menu
     if key == "tab" then
         local Menu = require "src.states.Menu"
         GameState.switch(Menu)
     end
 end
 
--- --- SECTION DEBUG GLOBALE ---
 function Play:debug()
     love.graphics.setColor(0, 1, 1, 0.5)
 
@@ -238,7 +236,7 @@ function Play:debug()
     end
 
     love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("DEBUG MODE - FPS: "..love.timer.getFPS(), 10, 10, self.screenW - 20, "right")
+    love.graphics.printf("DEBUG MODE - FPS: " .. love.timer.getFPS(), 10, 10, self.screenW - 20, "right")
 end
 
 return Play
