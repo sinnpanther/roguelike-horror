@@ -8,13 +8,14 @@ local Knife = require "src.entities.weapons.Knife"
 
 local Player = Class:extend()
 
-function Player:new(world, x, y)
+function Player:new(world, x, y, room)
     self.world = world
     -- Initial position and dimensions
     self.x, self.y = x, y
     self.pos = Vector(x, y)
     self.w, self.h = 32, 32 -- Rectangle size for collision
     self.type = "player"
+    self.room = room
 
     -- Movement settings
     self.speed = 300
@@ -25,11 +26,11 @@ function Player:new(world, x, y)
     self.fear = 0
     self.fearGain = 5
 
-    -- L'entité s'ajoute elle-même au monde
-    self.world:add(self, self.pos.x, self.pos.y, self.w, self.h)
-
     -- Arme équipée : couteau
     self.weapon = Knife(self.world, self)
+
+    -- L'entité s'ajoute elle-même au monde
+    self.world:add(self, self.pos.x, self.pos.y, self.w, self.h)
 end
 
 function Player:update(dt)
@@ -84,10 +85,7 @@ function Player:attack()
 end
 
 function Player:getCenter()
-    return {
-        x = self.x + self.w / 2,
-        y = self.y + self.h / 2
-    }
+    return self.x + self.w / 2, self.y + self.h / 2
 end
 
 return Player

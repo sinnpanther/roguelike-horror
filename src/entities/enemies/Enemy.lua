@@ -11,7 +11,7 @@ function Enemy:new(world, x, y, hp, speed)
     self.hp = hp or 3
     self.maxHp = self.hp
     self.speed = speed or 100
-    self.type = "enemy" -- Important pour WorldUtils.clearWorld !
+    self.type = "enemy"
 
     self.vx = 0
     self.vy = 0
@@ -62,6 +62,10 @@ function Enemy:draw()
     end
 
     love.graphics.setColor(1, 1, 1)
+end
+
+function Enemy:getCenter()
+    return self.x + self.w / 2, self.y + self.h / 2
 end
 
 -- AFFICHAGE DEBUG

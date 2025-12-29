@@ -30,4 +30,9 @@ function MathUtils.updateCoordinates(entity, x, y)
     entity.y = y
 end
 
+function MathUtils.angleDiff(a, b)
+    local diff = (a - b + math.pi) % (2 * math.pi) - math.pi
+    return diff
+end
+
 return MathUtils

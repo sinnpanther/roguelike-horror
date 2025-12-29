@@ -70,9 +70,9 @@ end
 -- Méthode à surcharger par les armes concrètes
 function Weapon:updatePosition()
     -- Par défaut : attaché au centre du player
-    local cPlayer = self.player:getCenter()
-    self.x = cPlayer.x - self.w / 2
-    self.y = cPlayer.y - self.h / 2
+    local px, py = self.player:getCenter()
+    self.x = px - self.w / 2
+    self.y = py - self.h / 2
 end
 
 function Weapon:applyDamage()

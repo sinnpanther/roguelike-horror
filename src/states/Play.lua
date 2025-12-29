@@ -7,7 +7,7 @@ local Vector = require "libs.hump.vector"
 local Play = {}
 local Player = require "src.entities.Player"
 local HUD = require "src.ui.HUD"
-local Level = require "src.entities.map.level"
+local Level = require "src.entities.map.Level"
 
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
@@ -78,7 +78,7 @@ function Play:enter()
 
     self.flashlight = {
         coneAngle = 0.45,
-        innerRadius = 30,
+        innerRadius = 40,
         outerRadius = 300,
         flickerAmp = 5
     }
@@ -89,7 +89,6 @@ function Play:update(dt)
     -- Joueur
     self.player:update(dt)
 
-    -- Ennemis : on délègue au Level (plutôt que self.room)
     if not FREEZE then
         self.level:update(dt, self.player)
     end
@@ -105,8 +104,8 @@ function Play:update(dt)
         end
     end
 
-    local pCenter = self.player:getCenter()
-    self.cam:lookAt(pCenter.x, pCenter.y)
+    local px, py = self.player:getCenter()
+    self.cam:lookAt(px, py)
 
     -- Flicker
     self.flickerTime = self.flickerTime + dt
@@ -125,6 +124,16 @@ function Play:draw()
 
     -- Draw : on dessine le Level entier (rooms + ennemis dans leurs draw)
     self.level:draw(self.player)
+
+    -- Dessin des ennemis avec règle de visibilité
+    for _, room in ipairs(self.level.rooms) do
+        for _, enemy in ipairs(room.enemies) do
+            if self:isEnemyVisible(enemy) then
+                enemy:draw()
+            end
+        end
+    end
+
     self.player:draw()
 
     self.cam:detach()
@@ -141,7 +150,7 @@ function Play:draw()
     love.graphics.stencil(function()
         self.cam:attach()
 
-        local pCenter = self.player:getCenter()
+        local px, py = self.player:getCenter()
         local angle = self.player.angle or 0
 
         local n = love.math.noise(self.flickerTime, 0.0)
@@ -150,14 +159,14 @@ function Play:draw()
 
         love.graphics.arc(
                 "fill",
-                pCenter.x, pCenter.y,
+                px, py,
                 outerRadius,
                 angle - self.flashlight.coneAngle,
                 angle + self.flashlight.coneAngle,
                 48
         )
 
-        love.graphics.circle("fill", pCenter.x, pCenter.y, self.flashlight.innerRadius)
+        love.graphics.circle("fill", px, py, self.flashlight.innerRadius)
 
         self.cam:detach()
     end, "replace", 1)
@@ -205,6 +214,36 @@ function Play:nextLevel()
 
     self.player.hasReachedExit = false
 end
+
+function Play:isEnemyVisible(enemy)
+    local px, py = self.player:getCenter()
+    local ex, ey = enemy:getCenter()
+
+    -- Vecteur joueur -> ennemi
+    local dx = ex - px
+    local dy = ey - py
+    local distSq = dx*dx + dy*dy
+
+    -- Halo circulaire (innerRadius)
+    if distSq <= self.flashlight.innerRadius * self.flashlight.innerRadius then
+        return true
+    end
+
+    -- Cône de lampe
+    local dist = math.sqrt(distSq)
+    if dist > self.flashlight.outerRadius then
+        return false
+    end
+
+    -- Angle vers l'ennemi
+    local angleToEnemy = math.atan2(dy, dx)
+    local playerAngle = self.player.angle or 0
+
+    local angleDiff = MathUtils.angleDiff(angleToEnemy, playerAngle)
+
+    return math.abs(angleDiff) <= self.flashlight.coneAngle
+end
+
 
 function Play:keypressed(key)
     if key == "r" then

@@ -13,7 +13,15 @@ end
 function Room:centerTile()
     local cx = math.floor(self.rect.x + self.rect.w / 2)
     local cy = math.floor(self.rect.y + self.rect.h / 2)
+
     return cx, cy
+end
+
+function Room:containsPoint(x, y)
+    return  x >= self.rect.x and
+            x <= self.rect.x + self.rect.w and
+            y >= self.rect.y and
+            y <= self.rect.y + self.rect.h
 end
 
 function Room:centerX()
@@ -33,12 +41,6 @@ function Room:spawnEnemies()
         local ex = (gx - 1) * self.ts
         local ey = (gy - 1) * self.ts
         table.insert(self.enemies, Chaser(self.world, ex, ey))
-    end
-end
-
-function Room:drawContents()
-    for _, enemy in ipairs(self.enemies) do
-        enemy:draw()
     end
 end
 

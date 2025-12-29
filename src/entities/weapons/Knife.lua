@@ -26,13 +26,13 @@ end
 
 -- Positionne le couteau devant le joueur (logique seulement)
 function Knife:updatePosition()
-    local player  = self.player
-    local center  = player:getCenter()
-    local dx      = math.cos(self.angle)
-    local dy      = math.sin(self.angle)
+    local player = self.player
+    local px, py = player:getCenter()
+    local dx = math.cos(self.angle)
+    local dy = math.sin(self.angle)
 
-    local cx = center.x + dx * self.offset
-    local cy = center.y + dy * self.offset
+    local cx = px + dx * self.offset
+    local cy = py + dy * self.offset
 
     self.x = cx - self.w * 0.5
     self.y = cy - self.h * 0.5
@@ -72,14 +72,14 @@ function Knife:draw()
     end
 
     -- Visuel du slash : petit arc devant le joueur
-    local center = self.player:getCenter()
+    local px, py = self.player:getCenter()
     local r = self.offset + self.w * 0.5
 
     love.graphics.setColor(1, 1, 1, 0.9)
     love.graphics.setLineWidth(3)
     love.graphics.arc(
         "line",
-        center.x, center.y,
+        px, py,
         r,
         self.angle - math.rad(25),
         self.angle + math.rad(25)

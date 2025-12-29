@@ -47,6 +47,24 @@ function Level:generate()
     self.mainRoom = self.rooms[1]
 end
 
+function Level:draw()
+    -- debug draw sol/mur (optionnel)
+    -- puis dessiner walls + rooms contents
+    love.graphics.setColor(0.1, 0.1, 0.1)
+    for y = 1, self.mapH do
+        for x = 1, self.mapW do
+            if self.tiles[y][x] == 0 then
+                love.graphics.rectangle("fill", (x-1)*self.ts, (y-1)*self.ts, self.ts, self.ts)
+            end
+        end
+    end
+
+    love.graphics.setColor(0.6, 0.6, 0.7)
+    for _, wall in ipairs(self.walls) do
+        love.graphics.rectangle("fill", wall.x, wall.y, wall.w, wall.h)
+    end
+end
+
 function Level:_initTiles(fillValue)
     for y = 1, self.mapH do
         self.tiles[y] = {}
@@ -164,28 +182,6 @@ function Level:update(dt, player)
         for _, enemy in ipairs(room.enemies) do
             enemy:update(dt, player)
         end
-    end
-end
-
-function Level:draw()
-    -- debug draw sol/mur (optionnel)
-    -- puis dessiner walls + rooms contents
-    love.graphics.setColor(0.1, 0.1, 0.1)
-    for y = 1, self.mapH do
-        for x = 1, self.mapW do
-            if self.tiles[y][x] == 0 then
-                love.graphics.rectangle("fill", (x-1)*self.ts, (y-1)*self.ts, self.ts, self.ts)
-            end
-        end
-    end
-
-    love.graphics.setColor(0.6, 0.6, 0.7)
-    for _, wall in ipairs(self.walls) do
-        love.graphics.rectangle("fill", wall.x, wall.y, wall.w, wall.h)
-    end
-
-    for _, room in ipairs(self.rooms) do
-        room:drawContents()
     end
 end
 

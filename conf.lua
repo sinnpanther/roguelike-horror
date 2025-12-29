@@ -7,7 +7,7 @@ function love.conf(t)
     DEBUG_CURRENT_SEED   = "NONE"
     DEBUG_CURRENT_LEVEL  = 1
     DEBUG_MODE           = false
-    FLASHLIGHT_ENABLED   = false
+    FLASHLIGHT_ENABLED   = true
     FREEZE               = false
 
 
