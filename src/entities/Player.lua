@@ -16,6 +16,7 @@ function Player:new(world, x, y, room)
     self.w, self.h = 32, 32 -- Rectangle size for collision
     self.type = "player"
     self.room = room
+    self.skin = "player"
 
     -- Movement settings
     self.speed = 300
@@ -68,8 +69,23 @@ end
 
 function Player:draw()
     -- Draw player placeholder
-    love.graphics.setColor(0.2, 0.6, 1)
-    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+    love.graphics.setColor(1, 1, 1, 1)
+    local sprite = love.graphics.newImage(string.format("assets/graphics/sprites/%s.png", self.skin))
+    sprite:setFilter("nearest", "nearest")
+
+    local cx = self.x + self.w / 2
+    local cy = self.y + self.h / 2
+
+    love.graphics.draw(
+            sprite,
+            cx,
+            cy,
+            0,   -- rotation (rad)
+            1,                -- scale X
+            1,                -- scale Y
+            self.w / 2,        -- origin X
+            self.h / 2         -- origin Y
+    )
 
     -- Dessin de l'arme (slash, etc.)
     self.weapon:draw()
