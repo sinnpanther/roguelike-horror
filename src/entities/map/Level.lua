@@ -97,8 +97,19 @@ function Level:_placeRooms(roomCount)
 
         local w = self.rng:random(20, 28)
         local h = self.rng:random(18, 24)
-        local x = self.rng:random(2, self.mapW - w - 1)
-        local y = self.rng:random(2, self.mapH - h - 1)
+        -- Zone centrale plus dense
+        local marginX = math.floor(self.mapW * 0.25)
+        local marginY = math.floor(self.mapH * 0.25)
+
+        local x = self.rng:random(
+                marginX,
+                self.mapW - marginX - w
+        )
+
+        local y = self.rng:random(
+                marginY,
+                self.mapH - marginY - h
+        )
 
         local rect = { x = x, y = y, w = w, h = h }
 
