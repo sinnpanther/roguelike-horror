@@ -101,19 +101,12 @@ function Level:_placeRooms(roomCount)
         local marginX = math.floor(self.mapW * 0.25)
         local marginY = math.floor(self.mapH * 0.25)
 
-        local x = self.rng:random(
-                marginX,
-                self.mapW - marginX - w
-        )
-
-        local y = self.rng:random(
-                marginY,
-                self.mapH - marginY - h
-        )
+        local x = self.rng:random(marginX, self.mapW - marginX - w)
+        local y = self.rng:random(marginY, self.mapH - marginY - h)
 
         local rect = { x = x, y = y, w = w, h = h }
 
-        if not self:_rectOverlapsAny(rect, 2) then
+        if not self:_rectOverlapsAny(rect, 3) then
             self:_carveRoom(rect)
             table.insert(self.rooms, Room(self.world, self.rng, self.levelIndex, rect))
         end
@@ -181,15 +174,16 @@ function Level:_carveV(y1, y2, x)
 end
 
 function Level:_buildWallColliders()
-    -- Très simple: pour chaque tile mur (1) adjacent à un sol (0), on place un collider.
-    -- (Optimisation plus tard: merge rectangles)
     for y = 1, self.mapH do
         for x = 1, self.mapW do
-            if self.map[y][x] == 0 and self:_hasAdjacentFloor(x, y) then
-                local px = (x-1) * self.ts
-                local py = (y-1) * self.ts
-                WorldUtils.addWall(self.world, self.walls, px, py, self.ts, self.ts)
-                self.map[y][x] = 2
+            if self.map[y][x] == 0 then
+                if self:_hasAdjacentFloor(x, y) then
+                    local px = (x-1) * self.ts
+                    local py = (y-1) * self.ts
+
+                    WorldUtils.addWall(self.world, self.walls, px, py, self.ts, self.ts)
+                    self.map[y][x] = 2
+                end
             end
         end
     end
@@ -197,11 +191,25 @@ end
 
 function Level:_hasAdjacentFloor(x, y)
     local function isFloor(tx, ty)
-        if tx < 1 or tx > self.mapW or ty < 1 or ty > self.mapH then return false end
+        if tx < 1 or tx > self.mapW or ty < 1 or ty > self.mapH then
+            return false
+        end
         return self.map[ty][tx] == 1
     end
 
-    return isFloor(x+1,y) or isFloor(x-1,y) or isFloor(x,y+1) or isFloor(x,y-1)
+    -- Cardinal
+    if isFloor(x+1, y) or isFloor(x-1, y)
+            or isFloor(x, y+1) or isFloor(x, y-1) then
+        return true
+    end
+
+    -- Diagonales (coins)
+    if isFloor(x+1, y+1) or isFloor(x-1, y-1)
+            or isFloor(x+1, y-1) or isFloor(x-1, y+1) then
+        return true
+    end
+
+    return false
 end
 
 function Level:buildQuads()
