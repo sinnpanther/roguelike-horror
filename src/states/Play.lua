@@ -118,7 +118,7 @@ function Play:update(dt)
 end
 
 function Play:draw()
-    love.graphics.clear(0, 0, 0)
+    --love.graphics.clear(0, 0, 0)
 
     self.cam:attach()
 

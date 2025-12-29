@@ -38,4 +38,24 @@ function WorldUtils.enemyFilter(item, other)
     return "slide" -- Bloqué par le reste
 end
 
+function WorldUtils.debugMap(map)
+    local lines = {}
+
+    for y = 1, #map do
+        local row = {}
+        for x = 1, #map[y] do
+            table.insert(row, tostring(map[y][x]))
+        end
+        table.insert(lines, table.concat(row, " "))
+    end
+
+    local output = table.concat(lines, "\n")
+
+    -- Print dans la console (optionnel)
+    --print(output)
+
+    -- Copie directe dans le presse-papier
+    love.system.setClipboardText(output)
+end
+
 return WorldUtils

@@ -1,10 +1,9 @@
--- src/entities/map/Level.lua
+-- Dependancies
 local Room = require "src.entities.map.Room"
+-- Utils
 local WorldUtils = require "src.utils.world_utils"
 
 local Level = Class:extend()
-
-local CORRIDOR_WIDTH = 2
 
 function Level:new(world, seed, levelIndex)
     self.world = world
@@ -15,13 +14,21 @@ function Level:new(world, seed, levelIndex)
 
     self.ts = TILE_SIZE
     self.mapW, self.mapH = 200, 160 -- en tiles (à ajuster)
-    self.tiles = {}
+
+    -- Map
+    -- 0 = Vide
+    -- 1 = Sol
+    -- 2 = Mur
+    self.map = {}
     self.rooms = {}
     self.walls = {}
+
+    self.tileset = love.graphics.newImage("assets/graphics/tiles/tileset.png")
+    self.tileset:setFilter("nearest", "nearest")
 end
 
 function Level:generate()
-    self:_initTiles(1) -- 1 = mur partout
+    self:_initTiles(0)
 
     local roomCount = self.rng:random(2, 5) -- exemple
     self:_placeRooms(roomCount)
@@ -36,6 +43,9 @@ function Level:generate()
 
     self:_buildWallColliders()
 
+    --WorldUtils.debugMap(self.map)
+    --self:buildQuads()
+
     -- spawn ennemis / deco par room
     for _, room in ipairs(self.rooms) do
         room:spawnEnemies()
@@ -48,37 +58,41 @@ function Level:generate()
 end
 
 function Level:draw()
-    -- debug draw sol/mur (optionnel)
-    -- puis dessiner walls + rooms contents
-    love.graphics.setColor(0.1, 0.1, 0.1)
     for y = 1, self.mapH do
         for x = 1, self.mapW do
-            if self.tiles[y][x] == 0 then
-                love.graphics.rectangle("fill", (x-1)*self.ts, (y-1)*self.ts, self.ts, self.ts)
+            local tile = self.map[y][x]
+            local px = (x - 1) * TILE_SIZE
+            local py = (y - 1) * TILE_SIZE
+
+            -- SOL
+            if tile == 1 then
+                local quad = love.graphics.newQuad(32, 32, self.ts, self.ts, self.tileset:getWidth(), self.tileset:getHeight())
+                love.graphics.draw(self.tileset, quad, px, py)
+            end
+
+            -- MUR
+            if tile == 2 then
+                local quad = love.graphics.newQuad(0, 256, self.ts, self.ts, self.tileset:getWidth(), self.tileset:getHeight())
+                love.graphics.draw(self.tileset, quad, px, py)
             end
         end
-    end
-
-    love.graphics.setColor(0.6, 0.6, 0.7)
-    for _, wall in ipairs(self.walls) do
-        love.graphics.rectangle("fill", wall.x, wall.y, wall.w, wall.h)
     end
 end
 
 function Level:_initTiles(fillValue)
     for y = 1, self.mapH do
-        self.tiles[y] = {}
+        self.map[y] = {}
         for x = 1, self.mapW do
-            self.tiles[y][x] = fillValue
+            self.map[y][x] = fillValue
         end
     end
 end
 
-function Level:_placeRooms(targetCount)
+function Level:_placeRooms(roomCount)
+    local maxAttempts = roomCount * 40
     local attempts = 0
-    local maxAttempts = targetCount * 40
 
-    while #self.rooms < targetCount and attempts < maxAttempts do
+    while #self.rooms < roomCount and attempts < maxAttempts do
         attempts = attempts + 1
 
         local w = self.rng:random(20, 28)
@@ -109,17 +123,17 @@ end
 function Level:_rectsOverlap(a, b, padding)
     local p = padding or 0
     return not (
-            a.x + a.w + p < b.x or
-                    a.x > b.x + b.w + p or
-                    a.y + a.h + p < b.y or
-                    a.y > b.y + b.h + p
+        a.x + a.w + p < b.x or
+        a.x > b.x + b.w + p or
+        a.y + a.h + p < b.y or
+        a.y > b.y + b.h + p
     )
 end
 
 function Level:_carveRoom(rect)
     for y = rect.y, rect.y + rect.h - 1 do
         for x = rect.x, rect.x + rect.w - 1 do
-            self.tiles[y][x] = 0 -- sol
+            self.map[y][x] = 1 -- sol
         end
     end
 end
@@ -139,9 +153,9 @@ function Level:_carveH(x1, x2, y)
     local from = math.min(x1, x2)
     local to   = math.max(x1, x2)
     for x = from, to do
-        self.tiles[y][x] = 0
+        self.map[y][x] = 1
         -- largeur de couloir optionnelle
-        self.tiles[y+1][x] = 0
+        self.map[y+1][x] = 1
     end
 end
 
@@ -149,9 +163,9 @@ function Level:_carveV(y1, y2, x)
     local from = math.min(y1, y2)
     local to   = math.max(y1, y2)
     for y = from, to do
-        self.tiles[y][x] = 0
+        self.map[y][x] = 1
         -- largeur optionnelle
-        self.tiles[y][x+1] = 0
+        self.map[y][x+1] = 1
     end
 end
 
@@ -160,10 +174,11 @@ function Level:_buildWallColliders()
     -- (Optimisation plus tard: merge rectangles)
     for y = 1, self.mapH do
         for x = 1, self.mapW do
-            if self.tiles[y][x] == 1 and self:_hasAdjacentFloor(x, y) then
+            if self.map[y][x] == 0 and self:_hasAdjacentFloor(x, y) then
                 local px = (x-1) * self.ts
                 local py = (y-1) * self.ts
                 WorldUtils.addWall(self.world, self.walls, px, py, self.ts, self.ts)
+                self.map[y][x] = 2
             end
         end
     end
@@ -172,9 +187,28 @@ end
 function Level:_hasAdjacentFloor(x, y)
     local function isFloor(tx, ty)
         if tx < 1 or tx > self.mapW or ty < 1 or ty > self.mapH then return false end
-        return self.tiles[ty][tx] == 0
+        return self.map[ty][tx] == 1
     end
+
     return isFloor(x+1,y) or isFloor(x-1,y) or isFloor(x,y+1) or isFloor(x,y-1)
+end
+
+function Level:buildQuads()
+    self.quads = {}
+
+    for y = 1, self.mapH do
+        self.quads[y] = {}
+        for x = 1, self.mapW do
+            if self.map[y][x] == 2 then
+                self.quads[y][x] = AutoTile.getQuad(
+                        self.map,
+                        x,
+                        y,
+                        self.tileset
+                )
+            end
+        end
+    end
 end
 
 function Level:update(dt, player)
