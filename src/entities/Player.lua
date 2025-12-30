@@ -22,6 +22,8 @@ function Player:new(world, x, y, room)
     self.speed = 300
     self.angle = 0 -- Direction de la lampe / de l'arme
     self.moveDir = Vector(0, 0)
+    self.visionRange = 300        -- portée réelle
+    self.fov = math.rad(90)      -- 90° (cone)
 
     self.flashlight = {
         coneAngle = 0.45,
@@ -86,6 +88,36 @@ function Player:draw()
     love.graphics.setColor(1, 1, 1)
 end
 
+function Player:canSee(enemy)
+    -- 1. Vecteur joueur -> ennemi
+    local toEnemy = enemy.pos - self.pos
+    local distance = toEnemy:len()
+
+    -- 2. Test distance
+    if distance > self.visionRange then
+        return false
+    end
+
+    -- 3. Direction du regard du joueur
+    local forward = Vector(math.cos(self.angle), math.sin(self.angle))
+
+    -- 4. Normalisation
+    local dir = toEnemy:normalized()
+
+    -- 5. Produit scalaire
+    local dot = forward.x * dir.x + forward.y * dir.y
+
+    -- 6. Angle max autorisé
+    local maxAngle = math.cos(self.fov / 2)
+
+    -- 7. Test angle
+    if dot < maxAngle then
+        return false
+    end
+
+    return true
+end
+
 -- Appelé par Play quand on appuie sur espace
 function Player:attack()
     if self.weapon and self.weapon.slash then
@@ -95,6 +127,10 @@ end
 
 function Player:getCenter()
     return self.x + self.w / 2, self.y + self.h / 2
+end
+
+function Player:getVCenter()
+    return Vector(self.x + self.w / 2, self.y + self.h / 2)
 end
 
 return Player

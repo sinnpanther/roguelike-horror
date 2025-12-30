@@ -24,9 +24,9 @@ end
 
 function Chaser:update(dt, player)
     -- Position de l'ennemi
-    local ePos = Vector(self.x + self.w/2, self.y + self.h/2)
+    local ePos = self:getVCenter()
     -- Position du joueur
-    local targetPos = Vector(player.x + player.w/2, player.y + player.h/2)
+    local targetPos = player:getVCenter()
     local dir = (targetPos - ePos):normalized()
 
     -- --- LOGIQUE D'ANTICIPATION (Le Radar) ---

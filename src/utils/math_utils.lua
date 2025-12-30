@@ -24,10 +24,13 @@ function MathUtils.hashString(str)
 end
 
 function MathUtils.updateCoordinates(entity, x, y)
-    entity.pos.x = x
-    entity.pos.y = y
     entity.x = x
     entity.y = y
+
+    if entity.pos then
+        entity.pos.x = x
+        entity.pos.y = y
+    end
 end
 
 function MathUtils.angleDiff(a, b)

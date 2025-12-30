@@ -24,29 +24,27 @@ function Watcher:new(world, x, y)
 end
 
 function Watcher:update(dt, player)
-    local seen = self:isEnemyVisible(player)
-    local px, py = player:getCenter()
-    local ex, ey = self:getCenter()
+    self.state = "default"
 
-    if seen then
-        -- figé
-        self.vx, self.vy = 0, 0
-        return
+    if player:canSee(self) then
+        self.state = "frozen"
     end
 
-    -- déplacement vers le joueur
-    local dir = Vector(
-            px - ex,
-            py - ey
-    ):normalized()
+    if self.state ~= "frozen" then
+        -- Position de l'ennemi
+        local ePos = self.pos
+        -- Position du joueur
+        local targetPos = player.pos
+        local dir = (targetPos - ePos):normalized()
 
-    local goalX = self.x + dir.x * self.speed * dt
-    local goalY = self.y + dir.y * self.speed * dt
+        local goalX = self.x + dir.x * self.speed * dt
+        local goalY = self.y + dir.y * self.speed * dt
 
-    local ax, ay, cols, len = self.world:move(self, goalX, goalY, WorldUtils.enemyFilter)
+        local ax, ay, cols, len = self.world:move(self, goalX, goalY, WorldUtils.enemyFilter)
 
-    -- 4. Mise à jour des coordonnées
-    MathUtils.updateCoordinates(self, ax, ay)
+        -- 4. Mise à jour des coordonnées
+        MathUtils.updateCoordinates(self, ax, ay)
+    end
 end
 
 return Watcher

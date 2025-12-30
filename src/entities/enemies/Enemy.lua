@@ -14,6 +14,7 @@ function Enemy:new(world, x, y)
     self.speed = 100
     self.type = "enemy"
     self.entityType = "enemy"
+    self.state = 'default'
     self.color = {
         red = 1,
         green = 1,
@@ -33,7 +34,11 @@ function Enemy:update(dt, player)
     error("La méthode update doit être implémentée par le type d'ennemi")
 end
 
-function Enemy:draw()
+function Enemy:draw(player)
+    if not player:canSee(self) and not DEBUG_MODE then
+        return
+    end
+
     -- Corps de l'ennemi
     love.graphics.setColor(self.color.red, self.color.green, self.color.blue, self.color.alpha)
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
@@ -70,33 +75,8 @@ function Enemy:getCenter()
     return self.x + self.w / 2, self.y + self.h / 2
 end
 
-function Enemy:isEnemyVisible(player)
-    local px, py = player:getCenter()
-    local ex, ey = self:getCenter()
-
-    -- Vecteur joueur -> ennemi
-    local dx = ex - px
-    local dy = ey - py
-    local distSq = dx*dx + dy*dy
-
-    -- Halo circulaire (innerRadius)
-    if distSq <= player.flashlight.innerRadius * player.flashlight.innerRadius then
-        return true
-    end
-
-    -- Cône de lampe
-    local dist = math.sqrt(distSq)
-    if dist > player.flashlight.outerRadius then
-        return false
-    end
-
-    -- Angle vers l'ennemi
-    local angleToEnemy = math.atan2(dy, dx)
-    local playerAngle = player.angle or 0
-
-    local angleDiff = MathUtils.angleDiff(angleToEnemy, playerAngle)
-
-    return math.abs(angleDiff) <= player.flashlight.coneAngle
+function Enemy:getVCenter()
+    return Vector(self.x + self.w / 2, self.y + self.h / 2)
 end
 
 -- AFFICHAGE DEBUG

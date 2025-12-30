@@ -120,13 +120,7 @@ function Play:draw()
     -- Dessin des ennemis avec règle de visibilité
     for _, room in ipairs(self.level.rooms) do
         for _, enemy in ipairs(room.enemies) do
-            if not DEBUG_MODE then
-                if enemy:isEnemyVisible(self.player) then
-                    enemy:draw()
-                end
-            else
-                enemy:draw()
-            end
+            enemy:draw(self.player)
         end
     end
 
