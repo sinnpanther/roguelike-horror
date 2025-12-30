@@ -1,17 +1,25 @@
 local Vector = require "libs.hump.vector"
+local MathUtils = require "src.utils.math_utils"
 
 local Enemy = Class:extend()
 
-function Enemy:new(world, x, y, hp, speed)
+function Enemy:new(world, x, y)
     self.world = world
     self.x, self.y = x, y
     self.pos = Vector(x, y)
     self.w = 32
     self.h = 32
-    self.hp = hp or 3
+    self.hp = 3
     self.maxHp = self.hp
-    self.speed = speed or 100
+    self.speed = 100
     self.type = "enemy"
+    self.entityType = "enemy"
+    self.color = {
+        red = 1,
+        green = 1,
+        blue = 1,
+        alpha = 1
+    }
 
     self.vx = 0
     self.vy = 0
@@ -33,7 +41,7 @@ end
 
 function Enemy:draw()
     -- Corps de l'ennemi
-    love.graphics.setColor(1, 0, 0)
+    love.graphics.setColor(self.color.red, self.color.green, self.color.blue, self.color.alpha)
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 
     -- --- BARRE DE VIE AU-DESSUS ---
@@ -66,6 +74,35 @@ end
 
 function Enemy:getCenter()
     return self.x + self.w / 2, self.y + self.h / 2
+end
+
+function Enemy:isEnemyVisible(player)
+    local px, py = player:getCenter()
+    local ex, ey = self:getCenter()
+
+    -- Vecteur joueur -> ennemi
+    local dx = ex - px
+    local dy = ey - py
+    local distSq = dx*dx + dy*dy
+
+    -- Halo circulaire (innerRadius)
+    if distSq <= player.flashlight.innerRadius * player.flashlight.innerRadius then
+        return true
+    end
+
+    -- Cône de lampe
+    local dist = math.sqrt(distSq)
+    if dist > player.flashlight.outerRadius then
+        return false
+    end
+
+    -- Angle vers l'ennemi
+    local angleToEnemy = math.atan2(dy, dx)
+    local playerAngle = player.angle or 0
+
+    local angleDiff = MathUtils.angleDiff(angleToEnemy, playerAngle)
+
+    return math.abs(angleDiff) <= player.flashlight.coneAngle
 end
 
 -- AFFICHAGE DEBUG

@@ -9,7 +9,17 @@ local Chaser = Enemy:extend()
 
 function Chaser:new(world, x, y)
     -- HP: 3, Speed: 80
-    Chaser.super.new(self, world, x, y, 3, 80)
+    Chaser.super.new(self, world, x, y)
+    self.hp = 3
+    self.maxHp = self.hp
+    self.speed = 80
+    self.type = "chaser"
+    self.color = {
+        red = 1,
+        green = 0,
+        blue = 0,
+        alpha = 1
+    }
 end
 
 function Chaser:update(dt, player)

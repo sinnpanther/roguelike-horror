@@ -15,12 +15,21 @@ function Player:new(world, x, y, room)
     self.pos = Vector(x, y)
     self.w, self.h = 32, 32 -- Rectangle size for collision
     self.type = "player"
+    self.entityType = "player"
     self.room = room
 
     -- Movement settings
     self.speed = 300
     self.angle = 0 -- Direction de la lampe / de l'arme
     self.moveDir = Vector(0, 0)
+
+    self.flashlight = {
+        coneAngle = 0.45,
+        innerRadius = 40,
+        outerRadius = 300,
+        flickerAmp = 5,
+        flickerTime = 0
+    }
 
     -- Horror mechanics
     self.fear = 0

@@ -44,7 +44,7 @@ function Knife:applyDamage()
     end
 
     local function filter(item)
-        return item.type == "enemy"
+        return item.entityType == "enemy"
     end
 
     local items, len = self.world:queryRect(self.x, self.y, self.w, self.h, filter)

@@ -8,6 +8,7 @@ function Door:new(world, x, y, side, w, h)
     self.h = TILE_SIZE
     self.side = side -- "north", "south", "east", or "west"
     self.type = "door"
+    self.entityType = "door"
 
     -- Enregistrement dans Bump
     self.world:add(self, self.x, self.y, self.w, self.h)

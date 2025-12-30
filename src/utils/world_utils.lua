@@ -14,14 +14,14 @@ function WorldUtils.clearWorld(world)
     -- On boucle à l'envers pour éviter les problèmes d'index lors de la suppression
     for i = #items, 1, -1 do
         local item = items[i]
-        if item.type ~= "player" then
+        if item.entityType ~= "player" then
             world:remove(item)
         end
     end
 end
 
 function WorldUtils.playerFilter(item, other)
-    if other.type == "door" or other.type == "enemy" then
+    if other.entityType == "door" or other.entityType == "enemy" then
         return "cross"
     end
 
@@ -29,9 +29,9 @@ function WorldUtils.playerFilter(item, other)
 end
 
 function WorldUtils.enemyFilter(item, other)
-    if other.type == "player" then
+    if other.entityType == "player" then
         return "cross" -- On passe à travers le joueur, mais Bump enregistre la collision
-    elseif other.type == "enemy" then
+    elseif other.entityType == "enemy" then
         return "slide" -- Optionnel : les ennemis se bloquent entre eux
     end
 

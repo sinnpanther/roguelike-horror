@@ -4,6 +4,7 @@ function Weapon:new(world, player)
     self.world = world
     self.player  = player          -- ex: Player
     self.type   = "weapon"
+    self.entityType   = "weapon"
 
     -- Hitbox logique (PAS un item Bump)
     self.x, self.y = player.x, player.y

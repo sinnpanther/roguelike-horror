@@ -75,14 +75,6 @@ function Play:enter()
     -- HUD + Cam
     self.hud = HUD(self.player)
     self.cam = Camera(self.player.x, self.player.y)
-
-    self.flashlight = {
-        coneAngle = 0.45,
-        innerRadius = 40,
-        outerRadius = 300,
-        flickerAmp = 5
-    }
-    self.flickerTime = 0
 end
 
 function Play:update(dt)
@@ -108,7 +100,7 @@ function Play:update(dt)
     self.cam:lookAt(px, py)
 
     -- Flicker
-    self.flickerTime = self.flickerTime + dt
+    self.player.flashlight.flickerTime = self.player.flashlight.flickerTime + dt
 
     -- Transition (on abandonne les portes/sides pour l’instant)
     if self.player.hasReachedExit then
@@ -128,7 +120,7 @@ function Play:draw()
     -- Dessin des ennemis avec règle de visibilité
     for _, room in ipairs(self.level.rooms) do
         for _, enemy in ipairs(room.enemies) do
-            if self:isEnemyVisible(enemy) then
+            if enemy:isEnemyVisible(self.player) then
                 enemy:draw()
             end
         end
@@ -152,21 +144,22 @@ function Play:draw()
 
         local px, py = self.player:getCenter()
         local angle = self.player.angle or 0
+        local flashlight = self.player.flashlight
 
-        local n = love.math.noise(self.flickerTime, 0.0)
-        local radiusOffset = (n - 0.5) * 2 * self.flashlight.flickerAmp
-        local outerRadius = self.flashlight.outerRadius + radiusOffset
+        local n = love.math.noise(flashlight.flickerTime, 0.0)
+        local radiusOffset = (n - 0.5) * 2 * flashlight.flickerAmp
+        local outerRadius = flashlight.outerRadius + radiusOffset
 
         love.graphics.arc(
                 "fill",
                 px, py,
                 outerRadius,
-                angle - self.flashlight.coneAngle,
-                angle + self.flashlight.coneAngle,
+                angle - flashlight.coneAngle,
+                angle + flashlight.coneAngle,
                 48
         )
 
-        love.graphics.circle("fill", px, py, self.flashlight.innerRadius)
+        love.graphics.circle("fill", px, py, flashlight.innerRadius)
 
         self.cam:detach()
     end, "replace", 1)
@@ -213,35 +206,6 @@ function Play:nextLevel()
     self.world:update(self.player, self.player.x, self.player.y)
 
     self.player.hasReachedExit = false
-end
-
-function Play:isEnemyVisible(enemy)
-    local px, py = self.player:getCenter()
-    local ex, ey = enemy:getCenter()
-
-    -- Vecteur joueur -> ennemi
-    local dx = ex - px
-    local dy = ey - py
-    local distSq = dx*dx + dy*dy
-
-    -- Halo circulaire (innerRadius)
-    if distSq <= self.flashlight.innerRadius * self.flashlight.innerRadius then
-        return true
-    end
-
-    -- Cône de lampe
-    local dist = math.sqrt(distSq)
-    if dist > self.flashlight.outerRadius then
-        return false
-    end
-
-    -- Angle vers l'ennemi
-    local angleToEnemy = math.atan2(dy, dx)
-    local playerAngle = self.player.angle or 0
-
-    local angleDiff = MathUtils.angleDiff(angleToEnemy, playerAngle)
-
-    return math.abs(angleDiff) <= self.flashlight.coneAngle
 end
 
 

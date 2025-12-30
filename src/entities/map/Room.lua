@@ -31,6 +31,7 @@ end
 
 function Room:spawnEnemies()
     local Chaser = require "src.entities.enemies.Chaser"
+    local Watcher = require "src.entities.enemies.Watcher"
 
     local maxPerRoom = 4
     local enemyCount = math.min(1 + math.floor(self.levelIndex / 2), maxPerRoom)
@@ -40,7 +41,15 @@ function Room:spawnEnemies()
         local gy = self.rng:random(self.rect.y + 2, self.rect.y + self.rect.h - 3)
         local ex = (gx - 1) * self.ts
         local ey = (gy - 1) * self.ts
-        table.insert(self.enemies, Chaser(self.world, ex, ey))
+
+        local enemy
+        if self.rng:random() < 0.5 then
+            enemy = Chaser(self.world, ex, ey)
+        else
+            enemy = Watcher(self.world, ex, ey)
+        end
+
+        table.insert(self.enemies, enemy)
     end
 end
 
