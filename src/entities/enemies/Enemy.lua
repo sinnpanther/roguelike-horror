@@ -71,6 +71,19 @@ function Enemy:draw(player)
     love.graphics.setColor(1, 1, 1)
 end
 
+function Enemy:isInPlayerRange(player)
+    -- 1. Vecteur joueur -> ennemi
+    local toPlayer = self.pos - player.pos
+    local distance = toPlayer:len()
+
+    -- 2. Test distance
+    if distance > player.visionRange then
+        return false
+    end
+
+    return true
+end
+
 function Enemy:getCenter()
     return self.x + self.w / 2, self.y + self.h / 2
 end

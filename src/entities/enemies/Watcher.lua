@@ -24,13 +24,17 @@ function Watcher:new(world, x, y)
 end
 
 function Watcher:update(dt, player)
-    self.state = "default"
+    self.state = 'default'
+
+    if self:isInPlayerRange(player) then
+        self.state = "chase"
+    end
 
     if player:canSee(self) then
         self.state = "frozen"
     end
 
-    if self.state ~= "frozen" then
+    if self.state == "chase" then
         -- Position de l'ennemi
         local ePos = self.pos
         -- Position du joueur
