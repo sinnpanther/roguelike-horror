@@ -27,7 +27,7 @@ function love.keypressed(key)
 
     -- Lampe torche ON/OFF
     if key == "f2" then
-        FLASHLIGHT_ENABLED = not FLASHLIGHT_ENABLED
+        FLASHLIGHT_DISABLED = not FLASHLIGHT_DISABLED
     end
 
     -- Freeze / unfreeze IA

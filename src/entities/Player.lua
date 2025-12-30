@@ -85,6 +85,10 @@ function Player:draw()
     -- Dessin de l'arme (slash, etc.)
     self.weapon:draw()
 
+    if DEBUG_MODE then
+        self:debug()
+    end
+
     love.graphics.setColor(1, 1, 1)
 end
 
@@ -131,6 +135,48 @@ end
 
 function Player:getVCenter()
     return Vector(self.x + self.w / 2, self.y + self.h / 2)
+end
+
+function Player:debug()
+    local cx, cy = self:getCenter()
+
+    -- Couleur debug (vert translucide)
+    love.graphics.setColor(0, 1, 0, 0.10)
+
+    -- Dessin du cône de vision
+    love.graphics.arc(
+            "fill",
+            cx,
+            cy,
+            self.visionRange,
+            self.angle - self.fov / 2,
+            self.angle + self.fov / 2,
+            32
+    )
+
+    -- Lampe torche
+    love.graphics.setColor(0, 0, 1)
+    love.graphics.arc(
+            "line",
+            cx,
+            cy,
+            self.visionRange,
+            self.angle - self.flashlight.coneAngle,
+            self.angle + self.flashlight.coneAngle,
+            32
+    )
+
+    -- Direction centrale (ligne)
+    love.graphics.setColor(0, 1, 0, 1)
+    local dx = math.cos(self.angle) * self.visionRange
+    local dy = math.sin(self.angle) * self.visionRange
+    love.graphics.line(cx, cy, cx + dx, cy + dy)
+
+    -- Point central
+    love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
+    love.graphics.circle("line", cx, cy, self.visionRange)
+
+    love.graphics.setColor(1, 1, 1)
 end
 
 return Player

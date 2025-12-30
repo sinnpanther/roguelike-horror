@@ -134,7 +134,7 @@ function Play:draw()
         self:debug()
     end
 
-    if not FLASHLIGHT_ENABLED then
+    if FLASHLIGHT_DISABLED then
         return
     end
 
