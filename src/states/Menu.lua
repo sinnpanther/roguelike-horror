@@ -5,6 +5,9 @@ function Menu:enter()
     self.selection = 1
     self.font = love.graphics.newFont(30)
     self.titleFont = love.graphics.newFont(60)
+
+    --self.mainTheme = love.audio.newSource("assets/audio/musics/main_theme.mp3", 'static')
+    --love.audio.play(self.mainTheme)
 end
 
 function Menu:keypressed(key)
@@ -58,6 +61,8 @@ function Menu:leave()
 
     -- Reset des couleurs de fond
     love.graphics.setColor(1, 1, 1)
+
+    --love.audio.stop(self.mainTheme)
 end
 
 return Menu
