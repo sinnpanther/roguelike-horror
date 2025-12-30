@@ -43,9 +43,6 @@ function Level:generate()
 
     self:_buildWallColliders()
 
-    --WorldUtils.debugMap(self.map)
-    --self:buildQuads()
-
     -- spawn ennemis / deco par room
     for _, room in ipairs(self.rooms) do
         room:spawnEnemies()

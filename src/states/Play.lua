@@ -120,7 +120,11 @@ function Play:draw()
     -- Dessin des ennemis avec règle de visibilité
     for _, room in ipairs(self.level.rooms) do
         for _, enemy in ipairs(room.enemies) do
-            if enemy:isEnemyVisible(self.player) then
+            if not DEBUG_MODE then
+                if enemy:isEnemyVisible(self.player) then
+                    enemy:draw()
+                end
+            else
                 enemy:draw()
             end
         end
@@ -130,11 +134,13 @@ function Play:draw()
 
     self.cam:detach()
 
+    self.hud:draw(self.levelIndex, self.seed)
+
+    if DEBUG_MODE then
+        self:debug()
+    end
+
     if not FLASHLIGHT_ENABLED then
-        self.hud:draw(self.levelIndex, self.seed)
-        if DEBUG_MODE then
-            self:debug()
-        end
         return
     end
 
@@ -171,12 +177,6 @@ function Play:draw()
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setStencilTest()
     love.graphics.setColor(1, 1, 1)
-
-    self.hud:draw(self.levelIndex, self.seed)
-
-    if DEBUG_MODE then
-        self:debug()
-    end
 end
 
 function Play:nextLevel()

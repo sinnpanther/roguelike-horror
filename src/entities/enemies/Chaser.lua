@@ -42,12 +42,11 @@ function Chaser:update(dt, player)
     local itemsL, lenL = self.world:querySegment(ePos.x, ePos.y, ePos.x + rayLeft.x, ePos.y + rayLeft.y)
     local itemsR, lenR = self.world:querySegment(ePos.x, ePos.y, ePos.x + rayRight.x, ePos.y + rayRight.y)
 
-    -- On stocke ces vecteurs pour pouvoir les dessiner plus tard
-    self.debug_rayL = targetPos + rayLeft
-    self.debug_rayR = targetPos + rayRight
-    -- On stocke aussi si ça a touché (pour changer la couleur)
-    self.debug_hitL = (lenL > 0)
-    self.debug_hitR = (lenR > 0)
+    if DEBUG_MODE then
+        -- On stocke ces vecteurs pour pouvoir les dessiner plus tard
+        self.debug_rayL = targetPos + rayLeft
+        self.debug_rayR = targetPos + rayRight
+    end
 
     local avoidanceForce = Vector(0, 0)
 

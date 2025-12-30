@@ -13,11 +13,6 @@ function HUD:draw(level, displaySeed)
 
     -- Seed (en petit, c'est une info technique)
     love.graphics.print("SEED : " .. displaySeed, 20, 40)
-
-
-    -- Instruction pour tester
-    love.graphics.setColor(1, 1, 1, 0.5)
-    love.graphics.print("Appuyez sur 'N' pour changer de salle", 20, love.graphics.getHeight() - 30)
 end
 
 return HUD
