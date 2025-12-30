@@ -44,7 +44,7 @@ function Player:new(world, x, y, room)
     self.world:add(self, self.pos.x, self.pos.y, self.w, self.h)
 end
 
-function Player:update(dt)
+function Player:update(dt, cam)
     local dir = self.moveDir
     dir.x, dir.y = 0, 0
 
@@ -54,24 +54,32 @@ function Player:update(dt)
     if love.keyboard.isDown("q") or love.keyboard.isDown("left") then dir.x = dir.x - 1 end
     if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dir.x = dir.x + 1 end
 
-    -- Mise à jour de l'angle seulement si on bouge
-    if dir:len() > 0 then
-        self.angle = math.atan2(dir.y, dir.x)
-    end
-
-    -- 2. Déplacement
+    -- mouvement
     local velocity = dir:trimmed(1) * self.speed * dt
     local goal = self.pos + velocity
 
-    local ax, ay, cols, len = self.world:move(self, goal.x, goal.y, WorldUtils.playerFilter)
+    local ax, ay = self.world:move(self, goal.x, goal.y, WorldUtils.playerFilter)
     MathUtils.updateCoordinates(self, ax, ay)
 
-    for i=1, len do
-        local col = cols[i]
-        if col.other.onInteract then
-            col.other:onInteract(self)
-        end
+    -- === ORIENTATION SOURIS ===
+    local mx, my = love.mouse.getPosition()
+    local wx, wy = cam:worldCoords(mx, my)
+
+    local cx = self.pos.x + self.w / 2
+    local cy = self.pos.y + self.h / 2
+
+    local look = Vector(wx - cx, wy - cy)
+
+    if look:len() > 0 then
+        self.angle = math.atan2(look.y, look.x)
     end
+
+    --for i=1, len do
+    --    local col = cols[i]
+    --    if col.other.onInteract then
+    --        col.other:onInteract(self)
+    --    end
+    --end
 
     -- Mise à jour de l'arme
     self.weapon:update(dt)

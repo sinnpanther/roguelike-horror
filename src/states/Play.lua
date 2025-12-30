@@ -79,7 +79,7 @@ end
 
 function Play:update(dt)
     -- Joueur
-    self.player:update(dt)
+    self.player:update(dt, self.cam)
 
     if not FREEZE then
         self.level:update(dt, self.player)
@@ -212,13 +212,15 @@ function Play:keypressed(key)
         self:nextLevel()
     end
 
-    if key == "space" then
-        self.player:attack()
-    end
-
     if key == "tab" then
         local Menu = require "src.states.Menu"
         GameState.switch(Menu)
+    end
+end
+
+function Play:mousepressed(x, y, button)
+    if button == 1 then -- clic gauche
+        self.player:attack()
     end
 end
 
