@@ -1,5 +1,7 @@
 -- Dependancies
-local Room = require "src.entities.map.Room"
+local Room = require "src.map.Room"
+local SpatialHash = require "src.map.SpatialHash"
+
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
 
@@ -9,6 +11,7 @@ function Level:new(world, seed, levelIndex)
     self.world = world
     self.seed = seed
     self.levelIndex = levelIndex
+    self.spatialHash = SpatialHash(TILE_SIZE * 2)
 
     self.rng = love.math.newRandomGenerator(seed + levelIndex)
 
@@ -74,6 +77,12 @@ function Level:draw()
             end
         end
     end
+
+    for _, room in ipairs(self.rooms) do
+        for _, enemy in ipairs(room.enemies) do
+            enemy:draw()
+        end
+    end
 end
 
 function Level:_initTiles(fillValue)
@@ -105,7 +114,7 @@ function Level:_placeRooms(roomCount)
 
         if not self:_rectOverlapsAny(rect, 3) then
             self:_carveRoom(rect)
-            table.insert(self.rooms, Room(self.world, self.rng, self.levelIndex, rect))
+            table.insert(self.rooms, Room(self.world, self, self.rng, self.levelIndex, rect))
         end
     end
 end

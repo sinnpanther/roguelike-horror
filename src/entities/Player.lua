@@ -8,8 +8,9 @@ local Knife = require "src.entities.weapons.Knife"
 
 local Player = Class:extend()
 
-function Player:new(world, x, y, room)
+function Player:new(world, level, x, y, room)
     self.world = world
+    self.level = level
     -- Initial position and dimensions
     self.x, self.y = x, y
     self.pos = Vector(x, y)
@@ -60,6 +61,7 @@ function Player:update(dt, cam)
 
     local ax, ay = self.world:move(self, goal.x, goal.y, WorldUtils.playerFilter)
     MathUtils.updateCoordinates(self, ax, ay)
+    self.level.spatialHash:update(self)
 
     -- === ORIENTATION SOURIS ===
     local mx, my = love.mouse.getPosition()
@@ -132,8 +134,8 @@ end
 
 -- Appelé par Play quand on appuie sur espace
 function Player:attack()
-    if self.weapon and self.weapon.slash then
-        self.weapon:slash(self.angle or 0)
+    if self.weapon then
+        self.weapon:tryAttack(self.angle or 0)
     end
 end
 

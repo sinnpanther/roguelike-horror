@@ -7,9 +7,9 @@ local MathUtils = require "src.utils.math_utils"
 
 local Chaser = Enemy:extend()
 
-function Chaser:new(world, x, y)
+function Chaser:new(world, level, x, y)
     -- HP: 3, Speed: 80
-    Chaser.super.new(self, world, x, y)
+    Chaser.super.new(self, world, level, x, y)
     self.hp = 3
     self.maxHp = self.hp
     self.speed = 80
@@ -89,7 +89,7 @@ function Chaser:update(dt, player)
 
         -- 4. Mise à jour des coordonnées
         MathUtils.updateCoordinates(self, ax, ay)
-
+        self.level.spatialHash:update(self)
     end
 end
 

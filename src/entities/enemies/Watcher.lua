@@ -7,8 +7,8 @@ local MathUtils = require "src.utils.math_utils"
 
 local Watcher = Enemy:extend()
 
-function Watcher:new(world, x, y)
-    Watcher.super.new(self, world, x, y)
+function Watcher:new(world, level, x, y)
+    Watcher.super.new(self, world, level, x, y)
 
     self.pos = Vector(x, y)
     self.hp = 3
@@ -48,6 +48,7 @@ function Watcher:update(dt, player)
 
         -- 4. Mise à jour des coordonnées
         MathUtils.updateCoordinates(self, ax, ay)
+        self.level.spatialHash:update(self)
     end
 end
 

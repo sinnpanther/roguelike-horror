@@ -7,7 +7,7 @@ local Vector = require "libs.hump.vector"
 local Play = {}
 local Player = require "src.entities.Player"
 local HUD = require "src.ui.HUD"
-local Level = require "src.entities.map.Level"
+local Level = require "src.map.Level"
 
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
@@ -61,16 +61,17 @@ function Play:enter()
     self.level:generate()
 
     -- Room principale (celle où on démarre)
-    self.room = self.level.mainRoom
+    self.mainRoom = self.level.mainRoom
 
     -- Création du joueur puis placement au centre
-    local spawnX, spawnY = placePlayerAtRoomCenter({ w = 0, h = 0 }, self.room) -- dummy pour coords
-    self.player = Player(self.world, spawnX, spawnY)
+    local spawnX, spawnY = placePlayerAtRoomCenter({ w = 0, h = 0 }, self.mainRoom) -- dummy pour coords
+    self.player = Player(self.world, self.level, spawnX, spawnY)
 
     -- Re-ajustement si Player définit w/h après construction
-    spawnX, spawnY = placePlayerAtRoomCenter(self.player, self.room)
+    spawnX, spawnY = placePlayerAtRoomCenter(self.player, self.mainRoom)
     MathUtils.updateCoordinates(self.player, spawnX, spawnY)
     self.world:update(self.player, self.player.x, self.player.y)
+    self.level.spatialHash:add(self.player)
 
     -- HUD + Cam
     self.hud = HUD(self.player)
@@ -90,8 +91,7 @@ function Play:update(dt)
         for i = #seg.enemies, 1, -1 do
             local e = seg.enemies[i]
             if e.isDead then
-                self.world:remove(e)
-                table.remove(seg.enemies, i)
+                e:destroyEnemy(e, seg, i)
             end
         end
     end
@@ -117,22 +117,38 @@ function Play:draw()
     -- Draw : on dessine le Level entier (rooms + ennemis dans leurs draw)
     self.level:draw(self.player)
 
-    -- Dessin des ennemis avec règle de visibilité
-    for _, room in ipairs(self.level.rooms) do
-        for _, enemy in ipairs(room.enemies) do
-            enemy:draw(self.player)
+    local px, py = self.player:getCenter()
+    local range = self.player.visionRange
+
+    local nearbyEnemies = self.level.spatialHash:queryRect(
+            px - range,
+            py - range,
+            range * 2,
+            range * 2,
+            function(e)
+                return e.entityType == "enemy"
+            end
+    )
+
+    for _, enemy in ipairs(nearbyEnemies) do
+        if self.player:canSee(enemy) then
+            enemy.isVisible = true
+        else
+            enemy.isVisible = false
         end
     end
 
     self.player:draw()
 
+    if DEBUG_MODE then
+        self:debug()
+        self.level.spatialHash:drawDebug()
+    end
+
     self.cam:detach()
 
     self.hud:draw(self.levelIndex, self.seed)
 
-    if DEBUG_MODE then
-        self:debug()
-    end
 
     if FLASHLIGHT_DISABLED then
         return
@@ -142,7 +158,6 @@ function Play:draw()
     love.graphics.stencil(function()
         self.cam:attach()
 
-        local px, py = self.player:getCenter()
         local angle = self.player.angle or 0
         local flashlight = self.player.flashlight
 
@@ -174,31 +189,54 @@ function Play:draw()
 end
 
 function Play:nextLevel()
+    -- Fin de jeu
     if self.levelIndex >= 10 then
-        local stats = {
+        GameState.switch(States.Victory, {
             seed = self.seed,
             levelIndex = self.levelIndex
-        }
-        GameState.switch(States.Victory, stats)
+        })
         return
     end
 
-    -- Nettoyage complet du monde
+    -- --------------------------------------------------
+    -- 1. Nettoyage COMPLET de l'ancien level
+    -- --------------------------------------------------
+
+    -- Retirer toutes les entités non-joueur de Bump
     WorldUtils.clearWorld(self.world)
 
-    -- Nouveau level
+    -- Vider explicitement le spatial hash de l'ancien level
+    self.level.spatialHash.cells = {}
+
+    -- --------------------------------------------------
+    -- 2. Génération du nouveau level
+    -- --------------------------------------------------
+
     self.levelIndex = self.levelIndex + 1
     DEBUG_CURRENT_LEVEL = self.levelIndex
 
     self.level = Level(self.world, self.numericSeed, self.levelIndex)
     self.level:generate()
-    self.room = self.level.mainRoom
+    self.mainRoom = self.level.mainRoom
+    self.player.level = self.level
 
-    -- Repositionnement joueur au centre de la mainRoom
-    local spawnX, spawnY = placePlayerAtRoomCenter(self.player, self.room)
+    -- --------------------------------------------------
+    -- 3. Repositionnement du joueur
+    -- --------------------------------------------------
+
+    local cx, cy = self.mainRoom:centerTile()
+    local spawnX = (cx - 1) * TILE_SIZE
+    local spawnY = (cy - 1) * TILE_SIZE
+
     MathUtils.updateCoordinates(self.player, spawnX, spawnY)
     self.world:update(self.player, self.player.x, self.player.y)
 
+    -- IMPORTANT : ré-enregistrer le player dans le spatial hash
+    self.level.spatialHash:add(self.player)
+
+    -- --------------------------------------------------
+    -- 4. Reset état transition
+    -- --------------------------------------------------
     self.player.hasReachedExit = false
 end
 
@@ -215,6 +253,11 @@ function Play:keypressed(key)
     if key == "tab" then
         local Menu = require "src.states.Menu"
         GameState.switch(Menu)
+    end
+
+    -- Commandes
+    if key == "space" then
+        self.player:attack()
     end
 end
 

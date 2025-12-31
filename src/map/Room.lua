@@ -1,7 +1,8 @@
 local Room = Class:extend()
 
-function Room:new(world, rng, levelIndex, rect)
+function Room:new(world, level, rng, levelIndex, rect)
     self.world = world
+    self.level = level
     self.rng = rng
     self.levelIndex = levelIndex
     self.rect = rect
@@ -44,10 +45,11 @@ function Room:spawnEnemies()
 
         local enemy
         if self.rng:random() < 0.5 then
-            enemy = Chaser(self.world, ex, ey)
+            enemy = Chaser(self.world, self.level, ex, ey)
         else
-            enemy = Watcher(self.world, ex, ey)
+            enemy = Watcher(self.world, self.level, ex, ey)
         end
+        self.level.spatialHash:add(enemy)
 
         table.insert(self.enemies, enemy)
     end

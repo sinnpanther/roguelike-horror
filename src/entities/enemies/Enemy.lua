@@ -3,8 +3,9 @@ local MathUtils = require "src.utils.math_utils"
 
 local Enemy = Class:extend()
 
-function Enemy:new(world, x, y)
+function Enemy:new(world, level, x, y)
     self.world = world
+    self.level = level
     self.x, self.y = x, y
     self.pos = Vector(x, y)
     self.w = 32
@@ -34,8 +35,8 @@ function Enemy:update(dt, player)
     error("La méthode update doit être implémentée par le type d'ennemi")
 end
 
-function Enemy:draw(player)
-    if not player:canSee(self) and not DEBUG_MODE then
+function Enemy:draw()
+    if not self.isVisible and not DEBUG_MODE then
         return
     end
 
@@ -90,6 +91,12 @@ end
 
 function Enemy:getVCenter()
     return Vector(self.x + self.w / 2, self.y + self.h / 2)
+end
+
+function Enemy:destroyEnemy(enemy, room, index)
+    self.world:remove(enemy)
+    self.level.spatialHash:remove(enemy)
+    table.remove(room.enemies, index)
 end
 
 -- AFFICHAGE DEBUG
