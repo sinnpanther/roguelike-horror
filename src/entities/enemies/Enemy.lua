@@ -1,5 +1,6 @@
 local Vector = require "libs.hump.vector"
 local MathUtils = require "src.utils.math_utils"
+local WorldUtils = require "src.utils.world_utils"
 
 local Enemy = Class:extend()
 
@@ -8,14 +9,12 @@ function Enemy:new(world, level, x, y)
     self.level = level
     self.x, self.y = x, y
     self.pos = Vector(x, y)
-    self.w = 32
-    self.h = 32
+    self.w, self.h = 32, 32
     self.hp = 3
     self.maxHp = self.hp
     self.speed = 100
     self.type = "enemy"
     self.entityType = "enemy"
-    self.state = 'default'
     self.color = {
         red = 1,
         green = 1,
@@ -26,13 +25,83 @@ function Enemy:new(world, level, x, y)
     self.vx = 0
     self.vy = 0
 
+    -- State machine
+    self.state = "idle"
+    self.canSeePlayer = nil
+
+    self.visionRange = 250
+    self.fov = math.rad(80)
+    self.angle = 0
+
+    self.lastSeenPlayerPos = nil
+    self.timeSinceLastSeen = math.huge
+
     -- Ajout au monde physique
     self.world:add(self, self.x, self.y, self.w, self.h)
 end
 
 -- Méthode à redéfinir par les enfants (l'IA)
 function Enemy:update(dt, player)
-    error("La méthode update doit être implémentée par le type d'ennemi")
+    self:perceive(player)
+    self:updateState(dt, player)
+    self:act(dt, player)
+end
+
+function Enemy:perceive(player)
+    if self:canSee(player) then
+        self.lastSeenPlayerPos = player.pos:clone()
+        self.timeSinceLastSeen = 0
+        self.canSeePlayer = true
+    else
+        self.canSeePlayer = false
+        self.timeSinceLastSeen = self.timeSinceLastSeen + love.timer.getDelta()
+    end
+end
+
+function Enemy:updateState(dt, player)
+    if self.state == "dead" then
+        return
+    end
+
+    if self.lastSeenPlayerPos then
+        if self.timeSinceLastSeen < 0.5 then
+            self.state = "chase"
+        elseif self.timeSinceLastSeen < 3 then
+            self.state = "search"
+        else
+            self.lastSeenPlayerPos = nil
+            self.state = "idle"
+        end
+    end
+end
+
+function Enemy:act(dt, player)
+    if self.state == "idle" then
+        self:idleBehavior(dt)
+    elseif self.state == "freeze" then
+        return
+    elseif self.state == "chase" then
+        self:chaseBehavior(dt, player)
+    elseif self.state == "search" then
+        self:searchBehavior(dt)
+    end
+end
+
+---------------------
+--- Comportements ---
+---------------------
+function Enemy:idleBehavior(dt)
+    self.angle = self.angle + dt * 0.5
+end
+
+function Enemy:chaseBehavior(dt, player)
+    error("You must implement this method (chaseBehavior).")
+end
+
+function Enemy:searchBehavior(dt)
+    -- Se diriger vers la dernière position connue
+    -- Regarder autour
+    -- Avancer lentement
 end
 
 function Enemy:draw()
@@ -72,17 +141,21 @@ function Enemy:draw()
     love.graphics.setColor(1, 1, 1)
 end
 
-function Enemy:isInPlayerRange(player)
-    -- 1. Vecteur joueur -> ennemi
-    local toPlayer = self.pos - player.pos
-    local distance = toPlayer:len()
+function Enemy:canSee(player)
+    local toPlayer = player.pos - self.pos
+    local dist = toPlayer:len()
 
-    -- 2. Test distance
-    if distance > player.visionRange then
+    if dist > self.visionRange then
         return false
     end
 
-    return true
+    local forward = Vector(math.cos(self.angle), math.sin(self.angle))
+    local dir = toPlayer:normalized()
+
+    local dot = forward.x * dir.x + forward.y * dir.y
+    local maxDot = math.cos(self.fov / 2)
+
+    return dot >= maxDot
 end
 
 function Enemy:getCenter()
@@ -101,14 +174,42 @@ end
 
 -- AFFICHAGE DEBUG
 function Enemy:debug()
-    -- Position centrale pour le départ des rayons
-    local cx, cy = self.x + self.w/2, self.y + self.h/2
+    local cx = self.x + self.w / 2
+    local cy = self.y + self.h / 2
 
-    love.graphics.setColor(1, 0, 0)
-    -- Rayon Gauche
-    if self.debug_rayL then love.graphics.line(cx, cy, self.debug_rayL.x, self.debug_rayL.y) end
-    -- Rayon Droit
-    if self.debug_rayR then love.graphics.line(cx, cy, self.debug_rayR.x, self.debug_rayR.y) end
+    love.graphics.setColor(1, 1, 0, 0.15)
+
+    love.graphics.arc(
+            "fill",
+            cx, cy,
+            self.visionRange,
+            self.angle - self.fov / 2,
+            self.angle + self.fov / 2,
+            32
+    )
+
+    -- Direction
+    love.graphics.setColor(self.canSeePlayer and 0 or 1, self.canSeePlayer and 1 or 0, 0)
+    love.graphics.line(
+            cx, cy,
+            cx + math.cos(self.angle) * self.visionRange,
+            cy + math.sin(self.angle) * self.visionRange
+    )
+
+    -- Infos
+    love.graphics.print(
+            string.format(
+                    "state: %s\ncanSee: %s",
+                    self.state,
+                    tostring(self.canSeePlayer)
+            ),
+            self.x,
+            self.y - 55
+    )
+
+    -- Point central
+    love.graphics.setColor(0.8, 0, 0, 0.8)
+    love.graphics.circle("line", cx, cy, self.visionRange)
 
     -- Hitbox Bump (en blanc)
     love.graphics.setColor(1, 1, 1, 1)

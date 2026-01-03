@@ -102,10 +102,10 @@ function Player:draw()
     love.graphics.setColor(1, 1, 1)
 end
 
-function Player:canSee(enemy)
+function Player:canSee(target)
     -- 1. Vecteur joueur -> ennemi
-    local toEnemy = enemy.pos - self.pos
-    local distance = toEnemy:len()
+    local toTarget = target.pos - self.pos
+    local distance = toTarget:len()
 
     -- 2. Test distance
     if distance > self.visionRange then
@@ -116,7 +116,7 @@ function Player:canSee(enemy)
     local forward = Vector(math.cos(self.angle), math.sin(self.angle))
 
     -- 4. Normalisation
-    local dir = toEnemy:normalized()
+    local dir = toTarget:normalized()
 
     -- 5. Produit scalaire
     local dot = forward.x * dir.x + forward.y * dir.y

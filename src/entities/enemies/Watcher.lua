@@ -23,33 +23,64 @@ function Watcher:new(world, level, x, y)
     }
 end
 
-function Watcher:update(dt, player)
-    self.state = 'default'
+--function Watcher:perceive(player)
+--    Watcher.super.perceive(self, player)
+--
+--    if player:canSee(self) then
+--        self.lastSeenPlayerPos = player.pos:clone()
+--        self.timeSinceLastSeen = 0
+--        self.seen = true
+--    else
+--        self.seen = false
+--        self.timeSinceLastSeen = self.timeSinceLastSeen + love.timer.getDelta()
+--    end
+--end
 
-    if self:isInPlayerRange(player) then
-        self.state = "chase"
+function Watcher:updateState(dt, player)
+    if player:canSee(self) then
+        self.state = "freeze"
+        return
     end
 
-    if player:canSee(self) then
-        self.state = "frozen"
+    if self.lastSeenPlayerPos then
+        if self.timeSinceLastSeen < 0.5 then
+            self.state = "chase"
+        elseif self.timeSinceLastSeen < 3 then
+            self.state = "search"
+        else
+            self.lastSeenPlayerPos = nil
+            self.state = "idle"
+        end
+        return
+    end
+
+    self.state = "idle"
+end
+
+function Watcher:act(dt, player)
+    if self.state == "freeze" then
+        -- Immobilité totale
+        return
     end
 
     if self.state == "chase" then
-        -- Position de l'ennemi
-        local ePos = self.pos
-        -- Position du joueur
-        local targetPos = player.pos
-        local dir = (targetPos - ePos):normalized()
-
-        local goalX = self.x + dir.x * self.speed * dt
-        local goalY = self.y + dir.y * self.speed * dt
-
-        local ax, ay, cols, len = self.world:move(self, goalX, goalY, WorldUtils.enemyFilter)
-
-        -- 4. Mise à jour des coordonnées
-        MathUtils.updateCoordinates(self, ax, ay)
-        self.level.spatialHash:update(self)
+        self:chaseBehavior(dt, player)
     end
+end
+
+function Watcher:chaseBehavior(dt, player)
+    local dir = (player.pos - self.pos)
+    if dir:len() < 1 then return end
+
+    dir = dir:normalized()
+    self.angle = math.atan2(dir.y, dir.x)
+
+    local velocity = dir * self.speed * dt
+    local goal = self.pos + velocity
+
+    local ax, ay = self.world:move(self, goal.x, goal.y, WorldUtils.enemyFilter)
+    MathUtils.updateCoordinates(self, ax, ay)
+    self.level.spatialHash:update(self)
 end
 
 return Watcher
