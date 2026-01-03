@@ -25,10 +25,9 @@ function Player:new(world, level, x, y, room)
     self.moveDir = Vector(0, 0)
     self.visionRange = 300        -- portée réelle
     self.fov = math.rad(90)      -- 90° (cone)
-    self.visionConfidence = {}
 
     self.flashlight = {
-        coneAngle = 0.45,
+        coneAngle = math.rad(28),
         innerRadius = 40,
         outerRadius = 300,
         flickerAmp = 5,
@@ -124,7 +123,7 @@ function Player:canSee(enemy)
     local dot = forward.x * dir.x + forward.y * dir.y
 
     -- 6. Angle max autorisé
-    local maxAngle = math.cos(self.fov / 2)
+    local maxAngle = math.cos(self.flashlight.coneAngle)
 
     -- 7. Test angle
     if dot < maxAngle then
@@ -144,29 +143,6 @@ function Player:canSee(enemy)
     end
 
     return true
-end
-
-function Player:canPerceiveEnemy(enemy, dt)
-    local canSee = self:canSee(enemy)
-    local conf = self:_updateVisionConfidence(enemy, canSee, dt)
-
-    return conf > 0.6
-end
-
-function Player:_updateVisionConfidence(target, canSee, dt)
-    local conf = self.visionConfidence[target] or 0
-
-    if canSee then
-        -- plus conf est bas, plus c'est lent de "reconnaître"
-        local gain = (conf < 0.3) and 0.6 or 1.5
-        conf = math.min(conf + dt * gain, 1)
-    else
-        -- perte brutale
-        conf = math.max(conf - dt * 4.0, 0)
-    end
-
-    self.visionConfidence[target] = conf
-    return conf
 end
 
 -------------
@@ -191,24 +167,10 @@ end
 function Player:debug()
     local cx, cy = self:getCenter()
 
-    -- Couleur debug (vert translucide)
-    love.graphics.setColor(0, 1, 0, 0.10)
-
-    -- Dessin du cône de vision
+    -- Lampe torche
+    love.graphics.setColor(0, 0, 1, 0.10)
     love.graphics.arc(
             "fill",
-            cx,
-            cy,
-            self.visionRange,
-            self.angle - self.fov / 2,
-            self.angle + self.fov / 2,
-            32
-    )
-
-    -- Lampe torche
-    love.graphics.setColor(0, 0, 1)
-    love.graphics.arc(
-            "line",
             cx,
             cy,
             self.visionRange,
@@ -216,6 +178,7 @@ function Player:debug()
             self.angle + self.flashlight.coneAngle,
             32
     )
+    love.graphics.setColor(0, 0, 1)
 
      -- Infos
     love.graphics.print(
@@ -224,7 +187,7 @@ function Player:debug()
                     tostring(self.canSeeEnemy)
             ),
             self.x,
-            self.y - 55
+            self.y - 40
     )
 
     -- Direction centrale (ligne)

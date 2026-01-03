@@ -82,7 +82,7 @@ function Play:update(dt)
     )
 
     for _, enemy in ipairs(nearbyEnemies) do
-        if self.player:canPerceiveEnemy(enemy, dt) then
+        if self.player:canSee(enemy, dt) then
             enemy.isVisible = true
             self.player.canSeeEnemy = true
         else
@@ -106,34 +106,12 @@ end
 function Play:draw()
     love.graphics.clear(0, 0, 0)
 
+    --------------------------------------------------
+    -- 1. MONDE (TOUJOURS VISIBLE)
+    --------------------------------------------------
     self.cam:attach()
 
-    -- Draw : on dessine le Level entier (rooms + ennemis dans leurs draw)
     self.level:draw(self.player)
-
-    --local px, py = self.player:getCenter()
-    --local range = self.player.visionRange
-    --
-    --local nearbyEnemies = self.level.spatialHash:queryRect(
-    --        px - range,
-    --        py - range,
-    --        range * 2,
-    --        range * 2,
-    --        function(e)
-    --            return e.entityType == "enemy"
-    --        end
-    --)
-    --
-    --for _, enemy in ipairs(nearbyEnemies) do
-    --    if self.player:canSee(enemy) then
-    --        enemy.isVisible = true
-    --        self.player.canSeeEnemy = true
-    --    else
-    --        enemy.isVisible = false
-    --        self.player.canSeeEnemy = false
-    --    end
-    --end
-
     self.player:draw()
 
     if DEBUG_MODE then
@@ -143,43 +121,70 @@ function Play:draw()
 
     self.cam:detach()
 
+    --------------------------------------------------
+    -- 2. HUD
+    --------------------------------------------------
     self.hud:draw(self.levelIndex, self.seed)
-
 
     if FLASHLIGHT_DISABLED then
         return
     end
 
-    -- Lampe torche (stencil)
+    --------------------------------------------------
+    -- 3. PÉNOMBRE GLOBALE
+    --------------------------------------------------
+    love.graphics.setColor(0, 0, 0, 0.88)
+    love.graphics.rectangle(
+            "fill",
+            0, 0,
+            love.graphics.getWidth(),
+            love.graphics.getHeight()
+    )
+    love.graphics.setColor(1, 1, 1)
+
+    --------------------------------------------------
+    -- 4. STENCIL : CÔNE DE LAMPE (FAKE MAIS STYLÉ)
+    --------------------------------------------------
+    local px, py = self.player:getCenter()
+    local flashlight = self.player.flashlight
+
     love.graphics.stencil(function()
         self.cam:attach()
 
         local angle = self.player.angle or 0
-        local flashlight = self.player.flashlight
+        local a1 = angle - flashlight.coneAngle
+        local a2 = angle + flashlight.coneAngle
 
-        local n = love.math.noise(flashlight.flickerTime, 0.0)
-        local radiusOffset = (n - 0.5) * 2 * flashlight.flickerAmp
-        local outerRadius = flashlight.outerRadius + radiusOffset
-
+        -- cône principal
         love.graphics.arc(
                 "fill",
                 px, py,
-                outerRadius,
-                angle - flashlight.coneAngle,
-                angle + flashlight.coneAngle,
+                flashlight.outerRadius,
+                a1, a2,
                 48
         )
 
-        love.graphics.circle("fill", px, py, flashlight.innerRadius)
+        -- halo central (lisibilité)
+        love.graphics.circle(
+                "fill",
+                px, py,
+                flashlight.innerRadius
+        )
 
         self.cam:detach()
     end, "replace", 1)
 
-    love.graphics.setStencilTest("equal", 0)
+    --------------------------------------------------
+    -- 5. RETIRER LA PÉNOMBRE DANS LE CÔNE
+    --------------------------------------------------
+    love.graphics.setStencilTest("equal", 1)
 
-    love.graphics.setStencilTest("less", 1)
-    love.graphics.setColor(0, 0, 0.02, 0.98)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
+    -- IMPORTANT : on redessine le monde UNIQUEMENT ici
+    self.cam:attach()
+    self.level:draw(self.player)
+    self.player:draw()
+    self.cam:detach()
+
     love.graphics.setStencilTest()
     love.graphics.setColor(1, 1, 1)
 end
