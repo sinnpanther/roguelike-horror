@@ -61,47 +61,6 @@ end
 -- PROPS
 --------
 
-function Room:generatePillar()
-    print(self.theme)
-    if self.theme ~= "hospital" then return end
-
-    local map = self.level.map
-    local rng = self.rng
-
-    -- 1 chance sur 2 de générer le pattern
-    if rng:random(0, 1) == 0 then
-        return
-    end
-
-    -- Room trop petite → pas de pattern
-    if self.rect.w < 8 or self.rect.h < 8 then
-        return
-    end
-
-    -- Marge avec les murs (en tiles)
-    local marginX, marginY = 4, 4
-
-    local innerLeft   = self.rect.x + marginX
-    local innerRight  = self.rect.x + self.rect.w - marginX - 1
-    local innerTop    = self.rect.y + marginY
-    local innerBottom = self.rect.y + self.rect.h - marginY - 1
-
-    local positions = {
-        { innerLeft,  innerTop    },
-        { innerRight, innerTop    },
-        { innerLeft,  innerBottom },
-        { innerRight, innerBottom },
-    }
-
-    for _, pos in ipairs(positions) do
-        local tx, ty = pos[1], pos[2]
-
-        if self:_canPlacePillar(tx, ty) then
-            map[ty][tx] = 3
-        end
-    end
-end
-
 function Room:_canPlacePillar(tx, ty)
     local map = self.level.map
 

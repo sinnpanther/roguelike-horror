@@ -2,6 +2,11 @@
 local Room = require "src.map.Room"
 local SpatialHash = require "src.map.SpatialHash"
 
+-- Themes
+local LabTheme = require "src.map.themes.LabTheme"
+local HospitalTheme = require "src.map.themes.HospitalTheme"
+local GraveyardTheme = require "src.map.themes.GraveyardTheme"
+
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
 
@@ -12,7 +17,6 @@ function Level:new(world, seed, levelIndex)
     self.seed = seed
     self.levelIndex = levelIndex
     self.spatialHash = SpatialHash(TILE_SIZE * 2)
-    self.theme = self:_pickTheme(levelIndex)
 
     self.rng = love.math.newRandomGenerator(seed + levelIndex)
 
@@ -28,18 +32,17 @@ function Level:new(world, seed, levelIndex)
     self.rooms = {}
     self.walls = {}
 
+    self.theme = self:_pickTheme()
+    print(self.theme)
+
     self.tileset = love.graphics.newImage("assets/graphics/tiles/tileset.png")
     self.tileset:setFilter("nearest", "nearest")
 end
 
-function Level:_pickTheme(levelIndex)
-    local themes = {
-        "lab",
-        "hospital",
-        "graveyard"
-    }
-
-    return themes[((levelIndex - 1) % #themes) + 1]
+function Level:_pickTheme()
+    local themes = { LabTheme }
+    local ThemeClass = themes[self.rng:random(1, #themes)]
+    return ThemeClass(self)
 end
 
 function Level:generate()
@@ -56,10 +59,8 @@ function Level:generate()
         self:_carveCorridorL(ax, ay, bx, by)
     end
 
-    -- Generate PROPS
-    for _, room in ipairs(self.rooms) do
-        room:generatePillar()
-    end
+    -- Generate theme
+    self.theme:generate()
 
     self:_buildWallColliders()
 
