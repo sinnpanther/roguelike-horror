@@ -3,6 +3,8 @@ local Theme = require "src.map.themes.Theme"
 local LabTheme = Theme:extend()
 
 function LabTheme:generateRoom(room)
+    LabTheme.super.generateRoom(self, room)
+
     -- 1 chance sur 2
     if self.rng:random() < 0.5 then
         self:_generatePillarRectangle(room)

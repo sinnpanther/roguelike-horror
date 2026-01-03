@@ -13,18 +13,46 @@ function Room:new(world, level, rng, levelIndex, rect)
     self.theme = level.theme
 end
 
+function Room:getRandomSpawn(player)
+    local map = self.level.map
+    local ts = TILE_SIZE
+
+    local maxAttempts = 50
+
+    for i = 1, maxAttempts do
+        local tx = self.rng:random(
+                self.rect.x + 1,
+                self.rect.x + self.rect.w - 2
+        )
+        local ty = self.rng:random(
+                self.rect.y + 1,
+                self.rect.y + self.rect.h - 2
+        )
+
+        -- ✅ uniquement du SOL
+        if map[ty] and map[ty][tx] == 1 then
+            local px = (tx - 1) * ts
+            local py = (ty - 1) * ts
+
+            -- centrage du player si nécessaire
+            if player and player.w and player.h then
+                px = px - player.w / 2
+                py = py - player.h / 2
+            end
+
+            return px, py
+        end
+    end
+
+    -- fallback ultime (ne devrait jamais arriver)
+    return (self.rect.x + 1) * ts, (self.rect.y + 1) * ts
+end
+
 function Room:centerTile()
     local cx = math.floor(self.rect.x + self.rect.w / 2)
     local cy = math.floor(self.rect.y + self.rect.h / 2)
 
     return cx, cy
-end
-
-function Room:containsPoint(x, y)
-    return  x >= self.rect.x and
-            x <= self.rect.x + self.rect.w and
-            y >= self.rect.y and
-            y <= self.rect.y + self.rect.h
 end
 
 function Room:centerX()
@@ -111,9 +139,7 @@ function Room:spawnPillarsFromMap()
     for y = self.rect.y, self.rect.y + self.rect.h - 1 do
         for x = self.rect.x, self.rect.x + self.rect.w - 1 do
             if self.level.map[y][x] == 3 then
-                table.insert(self.props,
-                        Pillar(self.world, x, y, self.theme)
-                )
+                table.insert(self.props, Pillar(self.world, x, y, self.theme))
             end
         end
     end

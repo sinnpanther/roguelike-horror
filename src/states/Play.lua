@@ -14,33 +14,6 @@ local WorldUtils = require "src.utils.world_utils"
 local MathUtils = require "src.utils.math_utils"
 
 ----------------------------------------------------------------
--- Helpers
-----------------------------------------------------------------
-local function getRoomCenterPixels(room)
-    -- Cas "nouvelle Room" basée sur un rect en GRILLE (tiles)
-    -- On suppose : room.rect = { x, y, w, h } en tiles
-    -- => conversion en pixels via TILE_SIZE (ou room.ts)
-    local ts = TILE_SIZE
-
-    local cxTiles = room.rect.x + room.rect.w / 2
-    local cyTiles = room.rect.y + room.rect.h / 2
-
-    -- centre en pixels
-    return cxTiles * ts, cyTiles * ts
-end
-
-local function placePlayerAtRoomCenter(player, room)
-    local cx, cy = getRoomCenterPixels(room)
-
-    -- Player() prend souvent x/y en top-left, donc on centre correctement si possible
-    if player.w and player.h then
-        return cx - player.w / 2, cy - player.h / 2
-    end
-
-    return cx, cy
-end
-
-----------------------------------------------------------------
 -- State
 ----------------------------------------------------------------
 function Play:enter()
@@ -63,12 +36,11 @@ function Play:enter()
     -- Room principale (celle où on démarre)
     self.mainRoom = self.level.mainRoom
 
-    -- Création du joueur puis placement au centre
-    local spawnX, spawnY = placePlayerAtRoomCenter({ w = 0, h = 0 }, self.mainRoom) -- dummy pour coords
+    local spawnX, spawnY = self.mainRoom:getRandomSpawn()
     self.player = Player(self.world, self.level, spawnX, spawnY)
 
-    -- Re-ajustement si Player définit w/h après construction
-    spawnX, spawnY = placePlayerAtRoomCenter(self.player, self.mainRoom)
+    -- si w/h sont définis après
+    spawnX, spawnY = self.mainRoom:getRandomSpawn(self.player)
     MathUtils.updateCoordinates(self.player, spawnX, spawnY)
     self.world:update(self.player, self.player.x, self.player.y)
     self.level.spatialHash:add(self.player)
@@ -224,10 +196,7 @@ function Play:nextLevel()
     -- 3. Repositionnement du joueur
     -- --------------------------------------------------
 
-    local cx, cy = self.mainRoom:centerTile()
-    local spawnX = (cx - 1) * TILE_SIZE
-    local spawnY = (cy - 1) * TILE_SIZE
-
+    local spawnX, spawnY = self.mainRoom:getRandomSpawn(self.player)
     MathUtils.updateCoordinates(self.player, spawnX, spawnY)
     self.world:update(self.player, self.player.x, self.player.y)
 

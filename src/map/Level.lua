@@ -61,6 +61,7 @@ function Level:generate()
     -- Generate theme
     self.theme:generate()
 
+    self:_buildAutoWalls()
     self:_buildWallColliders()
 
     -- Spawn enemies, props, etc
@@ -203,17 +204,24 @@ function Level:_carveV(y1, y2, x)
     end
 end
 
+function Level:_buildAutoWalls()
+    for y = 1, self.mapH do
+        for x = 1, self.mapW do
+            if self.map[y][x] == 0 and self:_hasAdjacentFloor(x, y) then
+                self.map[y][x] = 2
+            end
+        end
+    end
+end
+
 function Level:_buildWallColliders()
     for y = 1, self.mapH do
         for x = 1, self.mapW do
-            if self.map[y][x] == 0 then
-                if self:_hasAdjacentFloor(x, y) then
-                    local px = (x-1) * self.ts
-                    local py = (y-1) * self.ts
+            if self.map[y][x] == 2 then
+                local px = (x - 1) * self.ts
+                local py = (y - 1) * self.ts
 
-                    WorldUtils.addWall(self.world, self.walls, px, py, self.ts, self.ts)
-                    self.map[y][x] = 2
-                end
+                WorldUtils.addWall(self.world, self.walls, px, py, self.ts, self.ts)
             end
         end
     end
