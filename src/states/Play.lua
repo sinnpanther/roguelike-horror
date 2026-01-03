@@ -69,6 +69,28 @@ function Play:update(dt)
     end
 
     local px, py = self.player:getCenter()
+    local range = self.player.visionRange
+
+    local nearbyEnemies = self.level.spatialHash:queryRect(
+            px - range,
+            py - range,
+            range * 2,
+            range * 2,
+            function(e)
+                return e.entityType == "enemy"
+            end
+    )
+
+    for _, enemy in ipairs(nearbyEnemies) do
+        if self.player:canPerceiveEnemy(enemy, dt) then
+            enemy.isVisible = true
+            self.player.canSeeEnemy = true
+        else
+            enemy.isVisible = false
+            self.player.canSeeEnemy = false
+        end
+    end
+
     self.cam:lookAt(px, py)
 
     -- Flicker
@@ -89,28 +111,28 @@ function Play:draw()
     -- Draw : on dessine le Level entier (rooms + ennemis dans leurs draw)
     self.level:draw(self.player)
 
-    local px, py = self.player:getCenter()
-    local range = self.player.visionRange
-
-    local nearbyEnemies = self.level.spatialHash:queryRect(
-            px - range,
-            py - range,
-            range * 2,
-            range * 2,
-            function(e)
-                return e.entityType == "enemy"
-            end
-    )
-
-    for _, enemy in ipairs(nearbyEnemies) do
-        if self.player:canSee(enemy) then
-            enemy.isVisible = true
-            self.player.canSeeEnemy = true
-        else
-            enemy.isVisible = false
-            self.player.canSeeEnemy = false
-        end
-    end
+    --local px, py = self.player:getCenter()
+    --local range = self.player.visionRange
+    --
+    --local nearbyEnemies = self.level.spatialHash:queryRect(
+    --        px - range,
+    --        py - range,
+    --        range * 2,
+    --        range * 2,
+    --        function(e)
+    --            return e.entityType == "enemy"
+    --        end
+    --)
+    --
+    --for _, enemy in ipairs(nearbyEnemies) do
+    --    if self.player:canSee(enemy) then
+    --        enemy.isVisible = true
+    --        self.player.canSeeEnemy = true
+    --    else
+    --        enemy.isVisible = false
+    --        self.player.canSeeEnemy = false
+    --    end
+    --end
 
     self.player:draw()
 

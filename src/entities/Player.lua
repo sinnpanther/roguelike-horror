@@ -25,6 +25,7 @@ function Player:new(world, level, x, y, room)
     self.moveDir = Vector(0, 0)
     self.visionRange = 300        -- portée réelle
     self.fov = math.rad(90)      -- 90° (cone)
+    self.visionConfidence = {}
 
     self.flashlight = {
         coneAngle = 0.45,
@@ -34,10 +35,6 @@ function Player:new(world, level, x, y, room)
         flickerTime = 0
     }
     self.canSeeEnemy = false
-
-    -- Horror mechanics
-    self.fear = 0
-    self.fearGain = 5
 
     -- Arme équipée : couteau
     self.weapon = Knife(self.world, self)
@@ -103,6 +100,10 @@ function Player:draw()
     love.graphics.setColor(1, 1, 1)
 end
 
+------------
+-- Vision --
+------------
+
 function Player:canSee(enemy)
     -- 1. Vecteur joueur -> ennemi
     local toEnemy = enemy.pos - self.pos
@@ -144,6 +145,33 @@ function Player:canSee(enemy)
 
     return true
 end
+
+function Player:canPerceiveEnemy(enemy, dt)
+    local canSee = self:canSee(enemy)
+    local conf = self:_updateVisionConfidence(enemy, canSee, dt)
+
+    return conf > 0.6
+end
+
+function Player:_updateVisionConfidence(target, canSee, dt)
+    local conf = self.visionConfidence[target] or 0
+
+    if canSee then
+        -- plus conf est bas, plus c'est lent de "reconnaître"
+        local gain = (conf < 0.3) and 0.6 or 1.5
+        conf = math.min(conf + dt * gain, 1)
+    else
+        -- perte brutale
+        conf = math.max(conf - dt * 4.0, 0)
+    end
+
+    self.visionConfidence[target] = conf
+    return conf
+end
+
+-------------
+-- Attaque --
+-------------
 
 -- Appelé par Play quand on appuie sur espace
 function Player:attack()

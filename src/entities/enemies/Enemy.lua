@@ -5,6 +5,9 @@ local WorldUtils = require "src.utils.world_utils"
 local Enemy = Class:extend()
 
 function Enemy:new(world, level, x, y)
+    Enemy._nextId = (Enemy._nextId or 0) + 1
+    self.id = Enemy._nextId
+
     self.world = world
     self.level = level
     self.x, self.y = x, y
