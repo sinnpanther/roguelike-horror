@@ -12,6 +12,7 @@ function Level:new(world, seed, levelIndex)
     self.seed = seed
     self.levelIndex = levelIndex
     self.spatialHash = SpatialHash(TILE_SIZE * 2)
+    self.theme = self:_pickTheme(levelIndex)
 
     self.rng = love.math.newRandomGenerator(seed + levelIndex)
 
@@ -22,12 +23,23 @@ function Level:new(world, seed, levelIndex)
     -- 0 = Vide
     -- 1 = Sol
     -- 2 = Mur
+    -- 3 = Pillar
     self.map = {}
     self.rooms = {}
     self.walls = {}
 
     self.tileset = love.graphics.newImage("assets/graphics/tiles/tileset.png")
     self.tileset:setFilter("nearest", "nearest")
+end
+
+function Level:_pickTheme(levelIndex)
+    local themes = {
+        "lab",
+        "hospital",
+        "graveyard"
+    }
+
+    return themes[((levelIndex - 1) % #themes) + 1]
 end
 
 function Level:generate()
@@ -44,12 +56,19 @@ function Level:generate()
         self:_carveCorridorL(ax, ay, bx, by)
     end
 
+    -- Generate PROPS
+    for _, room in ipairs(self.rooms) do
+        room:generatePillar()
+    end
+
     self:_buildWallColliders()
 
-    -- spawn ennemis / deco par room
+    -- Spawn enemies, props, etc
     for _, room in ipairs(self.rooms) do
         room:spawnEnemies()
-        -- room:spawnPillars() etc (si tu veux)
+        -- Props
+        room:spawnPillarsFromMap()
+        room:spawnEnemies()
     end
 
     -- si tu veux garder un équivalent "segments"
@@ -81,6 +100,12 @@ function Level:draw()
     for _, room in ipairs(self.rooms) do
         for _, enemy in ipairs(room.enemies) do
             enemy:draw()
+        end
+    end
+
+    for _, room in ipairs(self.rooms) do
+        for _, prop in ipairs(room.props) do
+            prop:draw()
         end
     end
 end
