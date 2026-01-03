@@ -155,7 +155,23 @@ function Enemy:canSee(player)
     local dot = forward.x * dir.x + forward.y * dir.y
     local maxDot = math.cos(self.fov / 2)
 
-    return dot >= maxDot
+    if dot < maxDot then
+        return false
+    end
+
+    local map = self.level.map
+
+    local ex = math.floor(self.x / TILE_SIZE) + 1
+    local ey = math.floor(self.y / TILE_SIZE) + 1
+
+    local px = math.floor(player.x / TILE_SIZE) + 1
+    local py = math.floor(player.y / TILE_SIZE) + 1
+
+    if not WorldUtils.hasLineOfSight(map, ex, ey, px, py) then
+        return false
+    end
+
+    return true
 end
 
 function Enemy:getCenter()

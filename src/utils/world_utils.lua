@@ -38,6 +38,45 @@ function WorldUtils.enemyFilter(item, other)
     return "slide" -- Bloqué par le reste
 end
 
+-- Bresenham simplifié en tile-based
+function WorldUtils.hasLineOfSight(map, x1, y1, x2, y2)
+    local dx = math.abs(x2 - x1)
+    local dy = math.abs(y2 - y1)
+
+    local sx = x1 < x2 and 1 or -1
+    local sy = y1 < y2 and 1 or -1
+
+    local err = dx - dy
+
+    local x, y = x1, y1
+
+    while true do
+        -- on ignore la tile de départ
+        if not (x == x1 and y == y1) then
+            local tile = map[y] and map[y][x]
+            if tile == 2 or tile == 3 then
+                return false
+            end
+        end
+
+        if x == x2 and y == y2 then
+            break
+        end
+
+        local e2 = err * 2
+        if e2 > -dy then
+            err = err - dy
+            x = x + sx
+        end
+        if e2 < dx then
+            err = err + dx
+            y = y + sy
+        end
+    end
+
+    return true
+end
+
 function WorldUtils.debugMap(map)
     local lines = {}
 

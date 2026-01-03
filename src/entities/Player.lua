@@ -33,6 +33,7 @@ function Player:new(world, level, x, y, room)
         flickerAmp = 5,
         flickerTime = 0
     }
+    self.canSeeEnemy = false
 
     -- Horror mechanics
     self.fear = 0
@@ -102,10 +103,10 @@ function Player:draw()
     love.graphics.setColor(1, 1, 1)
 end
 
-function Player:canSee(target)
+function Player:canSee(enemy)
     -- 1. Vecteur joueur -> ennemi
-    local toTarget = target.pos - self.pos
-    local distance = toTarget:len()
+    local toEnemy = enemy.pos - self.pos
+    local distance = toEnemy:len()
 
     -- 2. Test distance
     if distance > self.visionRange then
@@ -116,7 +117,7 @@ function Player:canSee(target)
     local forward = Vector(math.cos(self.angle), math.sin(self.angle))
 
     -- 4. Normalisation
-    local dir = toTarget:normalized()
+    local dir = toEnemy:normalized()
 
     -- 5. Produit scalaire
     local dot = forward.x * dir.x + forward.y * dir.y
@@ -126,6 +127,18 @@ function Player:canSee(target)
 
     -- 7. Test angle
     if dot < maxAngle then
+        return false
+    end
+
+    local map = self.level.map
+
+    local px = math.floor(self.x / TILE_SIZE) + 1
+    local py = math.floor(self.y / TILE_SIZE) + 1
+
+    local ex = math.floor(enemy.x / TILE_SIZE) + 1
+    local ey = math.floor(enemy.y / TILE_SIZE) + 1
+
+    if not WorldUtils.hasLineOfSight(map, px, py, ex, ey) then
         return false
     end
 
@@ -174,6 +187,16 @@ function Player:debug()
             self.angle - self.flashlight.coneAngle,
             self.angle + self.flashlight.coneAngle,
             32
+    )
+
+     -- Infos
+    love.graphics.print(
+            string.format(
+                    "canSee: %s",
+                    tostring(self.canSeeEnemy)
+            ),
+            self.x,
+            self.y - 55
     )
 
     -- Direction centrale (ligne)

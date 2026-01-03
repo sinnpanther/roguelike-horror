@@ -105,8 +105,10 @@ function Play:draw()
     for _, enemy in ipairs(nearbyEnemies) do
         if self.player:canSee(enemy) then
             enemy.isVisible = true
+            self.player.canSeeEnemy = true
         else
             enemy.isVisible = false
+            self.player.canSeeEnemy = false
         end
     end
 
