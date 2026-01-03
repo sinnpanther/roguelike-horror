@@ -32,6 +32,28 @@ function Room:centerX()
     return cx
 end
 
+function Room:_getRandomFloorTile()
+    local map = self.level.map
+
+    local maxAttempts = 20
+    local attempts = 0
+
+    while attempts < maxAttempts do
+        attempts = attempts + 1
+
+        local tx = self.rng:random(self.rect.x + 1, self.rect.x + self.rect.w - 2)
+        local ty = self.rng:random(self.rect.y + 1, self.rect.y + self.rect.h - 2)
+
+        -- ✅ uniquement du sol
+        if map[ty][tx] == 1 then
+            return tx, ty
+        end
+    end
+
+    -- Échec : aucune tile valide trouvée
+    return nil, nil
+end
+
 function Room:spawnEnemies()
     local Chaser = require "src.entities.enemies.Chaser"
     local Watcher = require "src.entities.enemies.Watcher"
@@ -40,10 +62,15 @@ function Room:spawnEnemies()
     local enemyCount = math.min(1 + math.floor(self.levelIndex / 2), maxPerRoom)
 
     for i = 1, enemyCount do
-        local gx = self.rng:random(self.rect.x + 2, self.rect.x + self.rect.w - 3)
-        local gy = self.rng:random(self.rect.y + 2, self.rect.y + self.rect.h - 3)
-        local ex = (gx - 1) * self.ts
-        local ey = (gy - 1) * self.ts
+        local tx, ty = self:_getRandomFloorTile()
+
+        -- sécurité : si aucune tile valide, on skip
+        if not tx then
+            break
+        end
+
+        local ex = (tx - 1) * self.ts
+        local ey = (ty - 1) * self.ts
 
         local enemy
         if self.rng:random() < 0.5 then

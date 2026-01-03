@@ -33,7 +33,6 @@ function Level:new(world, seed, levelIndex)
     self.walls = {}
 
     self.theme = self:_pickTheme()
-    print(self.theme)
 
     self.tileset = love.graphics.newImage("assets/graphics/tiles/tileset.png")
     self.tileset:setFilter("nearest", "nearest")
@@ -66,7 +65,6 @@ function Level:generate()
 
     -- Spawn enemies, props, etc
     for _, room in ipairs(self.rooms) do
-        room:spawnEnemies()
         -- Props
         room:spawnPillarsFromMap()
         room:spawnEnemies()
