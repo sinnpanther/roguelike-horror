@@ -36,6 +36,14 @@ function Level:new(world, seed, levelIndex)
 
     self.tileset = love.graphics.newImage("assets/graphics/tiles/tileset.png")
     self.tileset:setFilter("nearest", "nearest")
+
+    local tw, th = self.tileset:getWidth(), self.tileset:getHeight()
+
+    -- Sol (tes coords actuelles)
+    self.floorQuad = love.graphics.newQuad(32, 32, self.ts, self.ts, tw, th)
+
+    -- Mur (tes coords actuelles)
+    self.wallQuad  = love.graphics.newQuad(0, 256, self.ts, self.ts, tw, th)
 end
 
 function Level:_pickTheme()
@@ -83,16 +91,12 @@ function Level:draw()
             local px = (x - 1) * TILE_SIZE
             local py = (y - 1) * TILE_SIZE
 
-            -- SOL
             if tile == 1 then
-                local quad = love.graphics.newQuad(32, 32, self.ts, self.ts, self.tileset:getWidth(), self.tileset:getHeight())
-                love.graphics.draw(self.tileset, quad, px, py)
-            end
-
-            -- MUR
-            if tile == 2 then
-                local quad = love.graphics.newQuad(0, 256, self.ts, self.ts, self.tileset:getWidth(), self.tileset:getHeight())
-                love.graphics.draw(self.tileset, quad, px, py)
+                -- SOL
+                love.graphics.draw(self.tileset, self.floorQuad, px, py)
+            elseif tile == 2 then
+                -- MUR
+                love.graphics.draw(self.tileset, self.wallQuad, px, py)
             end
         end
     end
@@ -116,12 +120,7 @@ function Level:drawWallsOnly()
             if self.map[y][x] == 2 then
                 local px = (x - 1) * TILE_SIZE
                 local py = (y - 1) * TILE_SIZE
-
-                local quad = love.graphics.newQuad(
-                        0, 256, self.ts, self.ts,
-                        self.tileset:getWidth(), self.tileset:getHeight()
-                )
-                love.graphics.draw(self.tileset, quad, px, py)
+                love.graphics.draw(self.tileset, self.wallQuad, px, py)
             end
         end
     end
