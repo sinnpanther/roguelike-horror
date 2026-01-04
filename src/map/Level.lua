@@ -39,17 +39,49 @@ function Level:new(world, seed, levelIndex)
 
     local tw, th = self.tileset:getWidth(), self.tileset:getHeight()
 
+    -- Quads pré-calculés
     -- Sol (tes coords actuelles)
     self.floorQuad = love.graphics.newQuad(32, 32, self.ts, self.ts, tw, th)
-
     -- Mur (tes coords actuelles)
     self.wallQuad  = love.graphics.newQuad(0, 256, self.ts, self.ts, tw, th)
+
+    -- SpriteBatches (remplis après génération)
+    self.floorBatch = nil
+    self.wallBatch  = nil
 end
 
 function Level:_pickTheme()
     local themes = { LabTheme }
     local ThemeClass = themes[self.rng:random(1, #themes)]
     return ThemeClass(self)
+end
+
+function Level:buildTileBatches()
+    -- Capacité max (safe)
+    local maxTiles = self.mapW * self.mapH
+
+    self.floorBatch = love.graphics.newSpriteBatch(self.tileset, maxTiles, "static")
+    self.wallBatch  = love.graphics.newSpriteBatch(self.tileset, maxTiles, "static")
+
+    self.floorBatch:clear()
+    self.wallBatch:clear()
+
+    for y = 1, self.mapH do
+        for x = 1, self.mapW do
+            local tile = self.map[y][x]
+            local px = (x - 1) * self.ts
+            local py = (y - 1) * self.ts
+
+            if tile == 1 then
+                self.floorBatch:add(self.floorQuad, px, py)
+            elseif tile == 2 then
+                self.wallBatch:add(self.wallQuad, px, py)
+            end
+        end
+    end
+
+    self.floorBatch:flush()
+    self.wallBatch:flush()
 end
 
 function Level:generate()
@@ -71,6 +103,7 @@ function Level:generate()
 
     self:_buildAutoWalls()
     self:_buildWallColliders()
+    self:buildTileBatches()
 
     -- Spawn enemies, props, etc
     for _, room in ipairs(self.rooms) do
@@ -85,20 +118,12 @@ function Level:generate()
 end
 
 function Level:draw()
-    for y = 1, self.mapH do
-        for x = 1, self.mapW do
-            local tile = self.map[y][x]
-            local px = (x - 1) * TILE_SIZE
-            local py = (y - 1) * TILE_SIZE
+    if self.floorBatch then
+        love.graphics.draw(self.floorBatch, 0, 0)
+    end
 
-            if tile == 1 then
-                -- SOL
-                love.graphics.draw(self.tileset, self.floorQuad, px, py)
-            elseif tile == 2 then
-                -- MUR
-                love.graphics.draw(self.tileset, self.wallQuad, px, py)
-            end
-        end
+    if self.wallBatch then
+        love.graphics.draw(self.wallBatch, 0, 0)
     end
 
     for _, room in ipairs(self.rooms) do
@@ -115,14 +140,8 @@ function Level:draw()
 end
 
 function Level:drawWallsOnly()
-    for y = 1, self.mapH do
-        for x = 1, self.mapW do
-            if self.map[y][x] == 2 then
-                local px = (x - 1) * TILE_SIZE
-                local py = (y - 1) * TILE_SIZE
-                love.graphics.draw(self.tileset, self.wallQuad, px, py)
-            end
-        end
+    if self.wallBatch then
+        love.graphics.draw(self.wallBatch, 0, 0)
     end
 end
 
