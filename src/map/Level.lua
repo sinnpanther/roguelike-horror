@@ -403,6 +403,17 @@ function Level:getTileAtPixel(px, py)
     return self.map[ty][tx], tx, ty
 end
 
+function Level:getTileAtWorld(x, y)
+    local tx = math.floor(x / TILE_SIZE) + 1
+    local ty = math.floor(y / TILE_SIZE) + 1
+
+    if not self.map[ty] or not self.map[ty][tx] then
+        return nil
+    end
+
+    return self.map[ty][tx]
+end
+
 --------------------------------------------------
 -- Bruit : notifie les ennemis proches (spatial hash)
 -- strength : 0..1 (optionnel)

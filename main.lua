@@ -2,6 +2,7 @@
 Class = require "libs.classic"
 Bump  = require "libs.bump"
 GameState = require "libs.hump.gamestate"
+SoundManager = require "src.audio.SoundManager"
 
 -- State files
 States = {
@@ -20,6 +21,9 @@ function love.load()
 
     -- Register basic callbacks (update, draw, etc.)
     GameState.registerEvents()
+
+    -- Load sound manager
+    SoundManager:load()
 
     -- Run Menu
     GameState.switch(States.Menu)

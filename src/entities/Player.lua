@@ -1,5 +1,6 @@
 -- Dependancies
 local Vector = require "libs.hump.vector"
+
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
 local MathUtils = require "src.utils.math_utils"
@@ -14,32 +15,44 @@ local Player = Class:extend()
 function Player:new(world, level, x, y, room)
     self.world = world
     self.level = level
-    -- Initial position and dimensions
+
+    -- Position
     self.x, self.y = x, y
     self.pos = Vector(x, y)
-    self.w, self.h = 32, 32 -- Rectangle size for collision
+
+    self._prevX = x
+    self._prevY = y
+
+    self.w, self.h = 32, 32
     self.type = "player"
     self.entityType = "player"
     self.room = room
 
-    -- Movement settings
+    -- Mouvement
     self.speed = 300
-    self.angle = 0 -- Direction de la lampe / de l'arme
+    self.angle = 0
     self.moveDir = Vector(0, 0)
-    self.visionRange = 420        -- portée réelle
-    self.fov = math.rad(90)      -- 90° (cone)
+
+    -- Vision
+    self.visionRange = 420
+    self.fov = math.rad(90)
 
     self.flashlight = Flashlight(self)
     self.canSeeEnemy = false
 
-    -- Arme équipée : couteau
+    -- Arme
     self.weapon = Knife(self.world, self)
 
+    -- Verre / bruit
     self.noiseCooldown = 0
-    self.glassNoiseCooldown = 0.35 -- secondes entre 2 "crac"
+    self.glassNoiseCooldown = 0.35
     self.glassNoiseRadius = 520
 
-    -- L'entité s'ajoute elle-même au monde
+    -- 👣 Pas
+    self.stepTimer = 0
+    self.stepDelay = 0.32
+
+    -- Ajout au monde
     self.world:add(self, self.pos.x, self.pos.y, self.w, self.h)
 end
 
@@ -47,61 +60,73 @@ function Player:update(dt, cam)
     local dir = self.moveDir
     dir.x, dir.y = 0, 0
 
-    -- Handle keyboard inputs (WASD / ZQSD support)
-    if love.keyboard.isDown("z") or love.keyboard.isDown("up") then dir.y = dir.y - 1 end
-    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then dir.y = dir.y + 1 end
-    if love.keyboard.isDown("q") or love.keyboard.isDown("left") then dir.x = dir.x - 1 end
-    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then dir.x = dir.x + 1 end
+    local hasInput = false
 
-    -- mouvement
+    if love.keyboard.isDown("z") or love.keyboard.isDown("up") then
+        dir.y = dir.y - 1
+        hasInput = true
+    end
+    if love.keyboard.isDown("s") or love.keyboard.isDown("down") then
+        dir.y = dir.y + 1
+        hasInput = true
+    end
+    if love.keyboard.isDown("q") or love.keyboard.isDown("left") then
+        dir.x = dir.x - 1
+        hasInput = true
+    end
+    if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
+        dir.x = dir.x + 1
+        hasInput = true
+    end
+
+    -- Déplacement
     local velocity = dir:trimmed(1) * self.speed * dt
     local goal = self.pos + velocity
+
+    -- Sauvegarde ancienne position
+    local oldX, oldY = self._prevX, self._prevY
 
     local ax, ay = self.world:move(self, goal.x, goal.y, WorldUtils.playerFilter)
     MathUtils.updateCoordinates(self, ax, ay)
     self.level.spatialHash:update(self)
 
-    -- === ORIENTATION SOURIS ===
+    -- Déplacement réel ?
+    local dx = self.x - oldX
+    local dy = self.y - oldY
+    local moved = (dx * dx + dy * dy) > 0.5
+
+    -- 👣 Sons de pas (ICI)
+    self:_handleStep(dt, hasInput and moved)
+
+    -- Mémoriser position
+    self._prevX = self.x
+    self._prevY = self.y
+
+    -- Orientation souris
     local mx, my = love.mouse.getPosition()
     local wx, wy = cam:worldCoords(mx, my)
 
     local cx, cy = self:getCenter()
-
     local look = Vector(wx - cx, wy - cy)
 
     if look:len() > 0 then
         self.angle = math.atan2(look.y, look.x)
     end
 
-    --------------------------------------------------
-    -- Verre : marcher dessus déclenche un bruit
-    --------------------------------------------------
-    self.noiseCooldown = math.max(0, (self.noiseCooldown or 0) - dt)
+    -- Bruit verre
+    self:_handleGlassNoise(dt, cx, cy)
 
-    local tile = self.level:getTileAtPixel(cx, cy)
-
-    if tile == 4 and self.noiseCooldown == 0 then
-        self.noiseCooldown = self.glassNoiseCooldown
-
-        -- bruit (notifie les ennemis)
-        self.level:emitNoise(cx, cy, self.glassNoiseRadius, 1.0)
-
-        -- Optionnel : feedback (son)
-        -- if self.sfxGlass then love.audio.play(self.sfxGlass:clone()) end
-    end
-
+    -- Lampe
     self.flashlight:update(dt, cam)
 
-    -- Mise à jour de l'arme
+    -- Arme
     self.weapon:update(dt)
 end
 
 function Player:draw()
-    -- Draw player placeholder
     love.graphics.setColor(0.2, 0.6, 1)
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
 
-    -- Dessin de l'arme (slash, etc.)
     self.weapon:draw()
 
     if DEBUG_MODE then
@@ -111,10 +136,9 @@ function Player:draw()
     love.graphics.setColor(1, 1, 1)
 end
 
-------------
--- Vision --
-------------
-
+---------------------
+-- Vision
+---------------------
 function Player:canSee(enemy)
     -- 1. Vecteur joueur -> ennemi
     local toEnemy = enemy.pos - self.pos
@@ -156,29 +180,51 @@ function Player:canSee(enemy)
         { enemy.x + w-ox,   enemy.y + h-oy },
     }
 
-    local visible = false
     for _, p in ipairs(points) do
         if VisionUtils.hasLineOfSight(self.level, px, py, p[1], p[2], 1.0) then
-            visible = true
-            break
+            return true
         end
     end
 
-    if not visible then
-        return false
-    end
-
-    return true
+    return false
 end
 
--------------
--- Attaque --
--------------
+---------------------
+-- Sons
+---------------------
+function Player:_handleStep(dt, shouldStep)
+    if not shouldStep then
+        self.stepTimer = 0
+        return
+    end
 
--- Appelé par Play quand on appuie sur espace
-function Player:attack()
-    if self.weapon then
-        self.weapon:tryAttack(self.angle or 0)
+    self.stepTimer = self.stepTimer - dt
+
+    if self.stepTimer <= 0 then
+        self:playFootstep()
+        self.stepTimer = self.stepDelay
+    end
+end
+
+function Player:playFootstep()
+    local cx, cy = self:getCenter()
+    local tile = self.level:getTileAtWorld(cx, cy)
+
+    if tile == 4 then
+        SoundManager:playGlassStep(0.7)
+    elseif tile == 1 then
+        SoundManager:playNormalStep()
+    end
+end
+
+function Player:_handleGlassNoise(dt, cx, cy)
+    self.noiseCooldown = math.max(0, self.noiseCooldown - dt)
+
+    local tile = self.level:getTileAtWorld(cx, cy)
+
+    if tile == 4 and self.noiseCooldown == 0 then
+        self.noiseCooldown = self.glassNoiseCooldown
+        self.level:emitNoise(cx, cy, self.glassNoiseRadius, 1.0)
     end
 end
 
@@ -188,45 +234,6 @@ end
 
 function Player:getVCenter()
     return Vector(self.x + self.w / 2, self.y + self.h / 2)
-end
-
-function Player:debug()
-    local cx, cy = self:getCenter()
-
-    -- Lampe torche
-    love.graphics.setColor(0, 0, 1, 0.10)
-    love.graphics.arc(
-            "fill",
-            cx,
-            cy,
-            self.visionRange,
-            self.angle - self.flashlight.coneAngle,
-            self.angle + self.flashlight.coneAngle,
-            32
-    )
-    love.graphics.setColor(0, 0, 1)
-
-     -- Infos
-    love.graphics.print(
-            string.format(
-                    "canSee: %s",
-                    tostring(self.canSeeEnemy)
-            ),
-            self.x,
-            self.y - 40
-    )
-
-    -- Direction centrale (ligne)
-    love.graphics.setColor(0, 1, 0, 1)
-    local dx = math.cos(self.angle) * self.visionRange
-    local dy = math.sin(self.angle) * self.visionRange
-    love.graphics.line(cx, cy, cx + dx, cy + dy)
-
-    -- Point central
-    love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
-    love.graphics.circle("line", cx, cy, self.visionRange)
-
-    love.graphics.setColor(1, 1, 1)
 end
 
 return Player
