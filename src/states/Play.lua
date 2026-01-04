@@ -145,6 +145,14 @@ function Play:draw()
     love.graphics.setColor(1, 1, 1)
 
     --------------------------------------------------
+    -- 2 bis. ANNULER LA PÉNOMBRE SUR LES MURS
+    -- (on redessine les murs au-dessus du voile noir)
+    --------------------------------------------------
+    --attachCamSnapped(self)
+    --self.level:drawWallsOnly()
+    --detachCamSnapped(self)
+
+    --------------------------------------------------
     -- 3. STENCIL : LAMPE TORCHE (CAM SNAP)
     --------------------------------------------------
     love.graphics.stencil(function()

@@ -110,6 +110,23 @@ function Level:draw()
     end
 end
 
+function Level:drawWallsOnly()
+    for y = 1, self.mapH do
+        for x = 1, self.mapW do
+            if self.map[y][x] == 2 then
+                local px = (x - 1) * TILE_SIZE
+                local py = (y - 1) * TILE_SIZE
+
+                local quad = love.graphics.newQuad(
+                        0, 256, self.ts, self.ts,
+                        self.tileset:getWidth(), self.tileset:getHeight()
+                )
+                love.graphics.draw(self.tileset, quad, px, py)
+            end
+        end
+    end
+end
+
 function Level:_initTiles(fillValue)
     for y = 1, self.mapH do
         self.map[y] = {}
