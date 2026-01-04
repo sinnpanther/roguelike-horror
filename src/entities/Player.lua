@@ -4,6 +4,7 @@ local Vector = require "libs.hump.vector"
 local WorldUtils = require "src.utils.world_utils"
 local MathUtils = require "src.utils.math_utils"
 -- Entities
+local Flashlight = require "src.entities.lighting.Flashlight"
 local Knife = require "src.entities.weapons.Knife"
 
 local Player = Class:extend()
@@ -23,16 +24,10 @@ function Player:new(world, level, x, y, room)
     self.speed = 300
     self.angle = 0 -- Direction de la lampe / de l'arme
     self.moveDir = Vector(0, 0)
-    self.visionRange = 300        -- portée réelle
+    self.visionRange = 420        -- portée réelle
     self.fov = math.rad(90)      -- 90° (cone)
 
-    self.flashlight = {
-        coneAngle = math.rad(28),
-        innerRadius = 40,
-        outerRadius = 300,
-        flickerAmp = 5,
-        flickerTime = 0
-    }
+    self.flashlight = Flashlight(self)
     self.canSeeEnemy = false
 
     -- Arme équipée : couteau
@@ -73,12 +68,7 @@ function Player:update(dt, cam)
         self.angle = math.atan2(look.y, look.x)
     end
 
-    --for i=1, len do
-    --    local col = cols[i]
-    --    if col.other.onInteract then
-    --        col.other:onInteract(self)
-    --    end
-    --end
+    self.flashlight:update(dt, cam)
 
     -- Mise à jour de l'arme
     self.weapon:update(dt)

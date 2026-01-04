@@ -11,6 +11,13 @@ States = {
 }
 
 function love.load()
+    love.window.setMode(
+            love.graphics.getWidth(),
+            love.graphics.getHeight(),
+            { msaa = 8 }
+    )
+    love.graphics.setDefaultFilter("linear", "linear")
+
     -- Register basic callbacks (update, draw, etc.)
     GameState.registerEvents()
 

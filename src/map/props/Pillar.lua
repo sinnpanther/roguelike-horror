@@ -16,7 +16,7 @@ function Pillar:new(world, tx, ty, theme)
 end
 
 function Pillar:draw()
-    love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
+    --love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
 end
 
 return Pillar

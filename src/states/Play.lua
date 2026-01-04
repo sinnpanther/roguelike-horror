@@ -94,7 +94,7 @@ function Play:update(dt)
     self.cam:lookAt(px, py)
 
     -- Flicker
-    self.player.flashlight.flickerTime = self.player.flashlight.flickerTime + dt
+    --self.player.flashlight.flickerTime = self.player.flashlight.flickerTime + dt
 
     -- Transition (on abandonne les portes/sides pour l’instant)
     if self.player.hasReachedExit then
@@ -103,90 +103,80 @@ function Play:update(dt)
     end
 end
 
+local function attachCamSnapped(self)
+    -- On snap la position camera à l'entier pour éviter les seams MSAA
+    local cx, cy = self.cam:position()
+    self._camSavedX, self._camSavedY = cx, cy
+    self.cam:lookAt(math.floor(cx + 0.5), math.floor(cy + 0.5))
+    self.cam:attach()
+end
+
+local function detachCamSnapped(self)
+    self.cam:detach()
+    -- On restaure la position "réelle" (pour ne pas impacter update / logique)
+    if self._camSavedX then
+        self.cam:lookAt(self._camSavedX, self._camSavedY)
+        self._camSavedX, self._camSavedY = nil, nil
+    end
+end
+
 function Play:draw()
     love.graphics.clear(0, 0, 0)
 
     --------------------------------------------------
-    -- 1. MONDE (TOUJOURS VISIBLE)
+    -- 1. DESSIN NORMAL DU MONDE (CAM SNAP)
     --------------------------------------------------
-    self.cam:attach()
-
+    attachCamSnapped(self)
     self.level:draw(self.player)
     self.player:draw()
-
-    if DEBUG_MODE then
-        self:debug()
-        self.level.spatialHash:drawDebug()
-    end
-
-    self.cam:detach()
-
-    --------------------------------------------------
-    -- 2. HUD
-    --------------------------------------------------
-    self.hud:draw(self.levelIndex, self.seed)
+    detachCamSnapped(self)
 
     if FLASHLIGHT_DISABLED then
+        self.hud:draw(self.levelIndex, self.seed)
+
         return
     end
 
     --------------------------------------------------
-    -- 3. PÉNOMBRE GLOBALE
+    -- 2. PÉNOMBRE GLOBALE
     --------------------------------------------------
     love.graphics.setColor(0, 0, 0, 0.88)
-    love.graphics.rectangle(
-            "fill",
-            0, 0,
-            love.graphics.getWidth(),
-            love.graphics.getHeight()
-    )
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setColor(1, 1, 1)
 
     --------------------------------------------------
-    -- 4. STENCIL : CÔNE DE LAMPE (FAKE MAIS STYLÉ)
+    -- 3. STENCIL : LAMPE TORCHE (CAM SNAP)
     --------------------------------------------------
-    local px, py = self.player:getCenter()
-    local flashlight = self.player.flashlight
-
     love.graphics.stencil(function()
-        self.cam:attach()
+        attachCamSnapped(self)
 
-        local angle = self.player.angle or 0
-        local a1 = angle - flashlight.coneAngle
-        local a2 = angle + flashlight.coneAngle
+        -- cône : raycast sur murs
+        self.player.flashlight:drawIrregularCone(self.level)
 
-        -- cône principal
-        love.graphics.arc(
-                "fill",
-                px, py,
-                flashlight.outerRadius,
-                a1, a2,
-                48
-        )
-
-        -- halo central (lisibilité)
-        love.graphics.circle(
-                "fill",
-                px, py,
-                flashlight.innerRadius
-        )
+        -- cercle central (lissé)
+        local fx, fy = self.player.flashlight:getPosition()
+        local circle = self.player.flashlight:getCircle()
+        love.graphics.circle("fill", fx + 0.5, fy + 0.5, circle, 64)
 
         self.cam:detach()
     end, "replace", 1)
 
     --------------------------------------------------
-    -- 5. RETIRER LA PÉNOMBRE DANS LE CÔNE
+    -- 4. RETIRER LA PÉNOMBRE DANS LE STENCIL (CAM SNAP)
     --------------------------------------------------
     love.graphics.setStencilTest("equal", 1)
 
-    -- IMPORTANT : on redessine le monde UNIQUEMENT ici
-    self.cam:attach()
+    attachCamSnapped(self)
     self.level:draw(self.player)
     self.player:draw()
-    self.cam:detach()
+    detachCamSnapped(self)
 
     love.graphics.setStencilTest()
-    love.graphics.setColor(1, 1, 1)
+
+    --------------------------------------------------
+    -- 5. HUD
+    --------------------------------------------------
+    self.hud:draw(self.levelIndex, self.seed)
 end
 
 function Play:nextLevel()
