@@ -5,6 +5,8 @@ local LabTheme = Theme:extend()
 function LabTheme:generateRoom(room)
     LabTheme.super.generateRoom(self, room)
 
+    self.id = "lab"
+
     -- 1 chance sur 2
     if self.rng:random() < 0.5 then
         self:_generatePillarRectangle(room)

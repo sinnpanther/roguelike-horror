@@ -37,34 +37,27 @@ end
 --end
 
 function Watcher:updateState(dt, player)
+    -- 1) PRIORITÉ ABSOLUE : freeze si le joueur regarde le watcher
     if player:canSee(self) then
         self.state = "freeze"
         return
     end
 
-    if self.lastSeenPlayerPos then
-        if self.timeSinceLastSeen < 0.5 then
-            self.state = "chase"
-        elseif self.timeSinceLastSeen < 3 then
-            self.state = "search"
-        else
-            self.lastSeenPlayerPos = nil
-            self.state = "idle"
-        end
-        return
-    end
-
-    self.state = "idle"
+    -- 2) Sinon, on laisse la logique du parent décider
+    -- (vision classique + bruit verre)
+    Watcher.super.updateState(self, dt, player)
 end
 
 function Watcher:act(dt, player)
     if self.state == "freeze" then
-        -- Immobilité totale
         return
     end
 
     if self.state == "chase" then
         self:chaseBehavior(dt, player)
+    elseif self.state == "search" then
+        -- Optionnel : comportement lent / hésitant
+        self:searchBehavior(dt)
     end
 end
 
@@ -81,6 +74,13 @@ function Watcher:chaseBehavior(dt, player)
     local ax, ay = self.world:move(self, goal.x, goal.y, WorldUtils.enemyFilter)
     MathUtils.updateCoordinates(self, ax, ay)
     self.level.spatialHash:update(self)
+end
+
+function Watcher:onNoiseHeard(x, y, strength)
+    -- le watcher hésite
+    if strength > 0.6 then
+        Watcher.super.onNoiseHeard(self, x, y, strength)
+    end
 end
 
 return Watcher

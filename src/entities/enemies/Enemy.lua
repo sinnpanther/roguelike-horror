@@ -41,25 +41,29 @@ function Enemy:new(world, level, x, y)
     self.lastSeenPlayerPos = nil
     self.timeSinceLastSeen = math.huge
 
+    self.lastHeardNoisePos = nil
+    self.timeSinceHeard = math.huge
+    self.noiseMemory = 2.5
+
     -- Ajout au monde physique
     self.world:add(self, self.x, self.y, self.w, self.h)
 end
 
 -- Méthode à redéfinir par les enfants (l'IA)
 function Enemy:update(dt, player)
-    self:perceive(player)
+    self:perceive(dt, player)
     self:updateState(dt, player)
     self:act(dt, player)
 end
 
-function Enemy:perceive(player)
+function Enemy:perceive(dt, player)
     if self:canSee(player) then
         self.lastSeenPlayerPos = player.pos:clone()
         self.timeSinceLastSeen = 0
         self.canSeePlayer = true
     else
         self.canSeePlayer = false
-        self.timeSinceLastSeen = self.timeSinceLastSeen + love.timer.getDelta()
+        self.timeSinceLastSeen = self.timeSinceLastSeen + dt
     end
 end
 
@@ -68,16 +72,34 @@ function Enemy:updateState(dt, player)
         return
     end
 
+    -- 1) Priorité : si je vois le joueur récemment
     if self.lastSeenPlayerPos then
         if self.timeSinceLastSeen < 0.5 then
             self.state = "chase"
+            return
         elseif self.timeSinceLastSeen < 3 then
             self.state = "search"
+            return
         else
             self.lastSeenPlayerPos = nil
-            self.state = "idle"
+            -- ne return pas: on peut fallback sur le bruit
         end
     end
+
+    -- 2) Sinon : bruit (verre)
+    if self.lastHeardNoisePos then
+        self.timeSinceHeard = self.timeSinceHeard + dt
+
+        if self.timeSinceHeard <= self.noiseMemory then
+            self.state = "search"
+            return
+        else
+            self.lastHeardNoisePos = nil
+        end
+    end
+
+    -- 3) Sinon idle
+    self.state = "idle"
 end
 
 function Enemy:act(dt, player)
@@ -104,9 +126,31 @@ function Enemy:chaseBehavior(dt, player)
 end
 
 function Enemy:searchBehavior(dt)
-    -- Se diriger vers la dernière position connue
-    -- Regarder autour
-    -- Avancer lentement
+    local target = self.lastSeenPlayerPos or self.lastHeardNoisePos
+    if not target then
+        return
+    end
+
+    -- Déplacement simple vers la target (tu peux remplacer par ton move habituel)
+    local dir = (target - self.pos)
+    local dist = dir:len()
+
+    -- arrivé
+    if dist < 8 then
+        return
+    end
+
+    dir = dir:normalized()
+    local goalX = self.x + dir.x * self.speed * 0.6 * dt
+    local goalY = self.y + dir.y * self.speed * 0.6 * dt
+
+    -- collision bump
+    local actualX, actualY = self.world:move(self, goalX, goalY, function() return "slide" end)
+    self.x, self.y = actualX, actualY
+    self.pos.x, self.pos.y = self.x, self.y
+
+    -- regarde vers la target
+    self.angle = math.atan2(target.y - (self.y + self.h/2), target.x - (self.x + self.w/2))
 end
 
 function Enemy:draw()
@@ -164,33 +208,39 @@ function Enemy:canSee(player)
         return false
     end
 
-    local w, h = self.w or 0, self.h or 0
-    local ox = math.min(4, w * 0.25)
-    local oy = math.min(4, h * 0.25)
-    local px, py = player:getCenter()
+    -- LOS précis : ENEMY -> points sur le PLAYER
     local ex, ey = self:getCenter()
 
+    local pw, ph = player.w or 0, player.h or 0
+    local ox = math.min(4, pw * 0.25)
+    local oy = math.min(4, ph * 0.25)
+
     local points = {
-        { ex, ey },
-        { self.x + ox,     self.y + oy },
-        { self.x + w-ox,   self.y + oy },
-        { self.x + ox,     self.y + h-oy },
-        { self.x + w-ox,   self.y + h-oy },
+        { player.x + pw * 0.5, player.y + ph * 0.5 }, -- centre
+        { player.x + ox,       player.y + oy },
+        { player.x + pw - ox,  player.y + oy },
+        { player.x + ox,       player.y + ph - oy },
+        { player.x + pw - ox,  player.y + ph - oy },
     }
 
-    local visible = false
     for _, p in ipairs(points) do
-        if VisionUtils.hasLineOfSight(self.level, px, py, p[1], p[2], 1.0) then
-            visible = true
-            break
+        if VisionUtils.hasLineOfSight(self.level, ex, ey, p[1], p[2], 1.0) then
+            return true
         end
     end
 
-    if not visible then
-        return false
-    end
+    return false
+end
 
-    return true
+function Enemy:onNoiseHeard(x, y, strength)
+    -- strength: 0..1 (pour plus tard)
+    self.lastHeardNoisePos = Vector(x, y)
+    self.timeSinceHeard = 0
+
+    -- Si je ne vois pas déjà le joueur, je vais investiguer
+    if self.state ~= "chase" then
+        self.state = "search"
+    end
 end
 
 function Enemy:getCenter()

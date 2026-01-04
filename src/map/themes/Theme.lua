@@ -1,3 +1,5 @@
+local MapUtils = require "src.utils.map_utils"
+
 local Theme = Class:extend()
 
 function Theme:new(level)
@@ -21,8 +23,6 @@ function Theme:generateRoom(room)
 end
 
 function Theme:_generateInternalWall(room)
-    local map = self.map
-
     -- room trop petite
     if room.rect.w < 10 or room.rect.h < 10 then
         return
@@ -79,7 +79,7 @@ function Theme:_generateHorizontalWall(room)
 
     for ty = y, y + wallThickness - 1 do
         for tx = startX, endX do
-            if map[ty][tx] == 1 then
+            if MapUtils:isWalkableTile(map, tx, ty) then
                 map[ty][tx] = 2
             end
         end
@@ -124,7 +124,7 @@ function Theme:_generateVerticalWall(room)
 
     for tx = x, x + wallThickness - 1 do
         for ty = startY, endY do
-            if map[ty][tx] == 1 then
+            if MapUtils:isWalkableTile(map, tx, ty) then
                 map[ty][tx] = 2
             end
         end

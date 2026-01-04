@@ -1,3 +1,5 @@
+local MapUtils = require "src.utils.map_utils"
+
 local Room = Class:extend()
 
 function Room:new(world, level, rng, levelIndex, rect)
@@ -30,7 +32,7 @@ function Room:getRandomSpawn(player)
         )
 
         -- ✅ uniquement du SOL
-        if map[ty] and map[ty][tx] == 1 then
+        if map[ty] and MapUtils:isWalkableTile(map, tx, ty) then
             local px = (tx - 1) * ts
             local py = (ty - 1) * ts
 
@@ -73,7 +75,7 @@ function Room:_getRandomFloorTile()
         local ty = self.rng:random(self.rect.y + 1, self.rect.y + self.rect.h - 2)
 
         -- ✅ uniquement du sol
-        if map[ty][tx] == 1 then
+        if MapUtils:isWalkableTile(map, tx, ty) then
             return tx, ty
         end
     end

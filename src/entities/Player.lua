@@ -35,6 +35,10 @@ function Player:new(world, level, x, y, room)
     -- Arme équipée : couteau
     self.weapon = Knife(self.world, self)
 
+    self.noiseCooldown = 0
+    self.glassNoiseCooldown = 0.35 -- secondes entre 2 "crac"
+    self.glassNoiseRadius = 520
+
     -- L'entité s'ajoute elle-même au monde
     self.world:add(self, self.pos.x, self.pos.y, self.w, self.h)
 end
@@ -61,13 +65,29 @@ function Player:update(dt, cam)
     local mx, my = love.mouse.getPosition()
     local wx, wy = cam:worldCoords(mx, my)
 
-    local cx = self.pos.x + self.w / 2
-    local cy = self.pos.y + self.h / 2
+    local cx, cy = self:getCenter()
 
     local look = Vector(wx - cx, wy - cy)
 
     if look:len() > 0 then
         self.angle = math.atan2(look.y, look.x)
+    end
+
+    --------------------------------------------------
+    -- Verre : marcher dessus déclenche un bruit
+    --------------------------------------------------
+    self.noiseCooldown = math.max(0, (self.noiseCooldown or 0) - dt)
+
+    local tile = self.level:getTileAtPixel(cx, cy)
+
+    if tile == 4 and self.noiseCooldown == 0 then
+        self.noiseCooldown = self.glassNoiseCooldown
+
+        -- bruit (notifie les ennemis)
+        self.level:emitNoise(cx, cy, self.glassNoiseRadius, 1.0)
+
+        -- Optionnel : feedback (son)
+        -- if self.sfxGlass then love.audio.play(self.sfxGlass:clone()) end
     end
 
     self.flashlight:update(dt, cam)
