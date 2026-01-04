@@ -24,7 +24,7 @@ function Play:enter()
 
     -- Seed unique pour toute la run
     self.seed = MathUtils.generateBase36Seed(8)
-    self.numericSeed = MathUtils.hashString(self.seed)
+    self.numericSeed = MathUtils.hashString("UDTKJAED")
 
     DEBUG_CURRENT_SEED = self.seed
     DEBUG_CURRENT_LEVEL = self.levelIndex

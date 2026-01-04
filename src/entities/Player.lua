@@ -210,9 +210,9 @@ function Player:playFootstep()
     local cx, cy = self:getCenter()
     local tile = self.level:getTileAtWorld(cx, cy)
 
-    if tile == 4 then
+    if tile == TILE_GLASS then
         SoundManager:playGlassStep(0.7)
-    elseif tile == 1 then
+    elseif tile == TILE_FLOOR or tile == TILE_CORRIDOR then
         SoundManager:playNormalStep()
     end
 end

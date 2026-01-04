@@ -9,7 +9,7 @@ local function isWall(level, tx, ty)
     if not map[ty] or not map[ty][tx] then
         return true -- hors map = bloquant
     end
-    return map[ty][tx] == 2 or map[ty][tx] == 3
+    return map[ty][tx] == TILE_WALL or map[ty][tx] == TILE_PROP
 end
 
 --------------------------------------------------

@@ -174,7 +174,7 @@ function Flashlight:_isWall(level, tx, ty)
         return true -- hors map = bloquant
     end
 
-    return map[ty][tx] == 2 or map[ty][tx] == 3
+    return map[ty][tx] == TILE_WALL or map[ty][tx] == TILE_PROP
 end
 
 --------------------------------------------------

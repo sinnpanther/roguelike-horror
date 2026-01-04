@@ -79,8 +79,17 @@ function Theme:_generateHorizontalWall(room)
 
     for ty = y, y + wallThickness - 1 do
         for tx = startX, endX do
+            -- Interdit devant un couloir
+            if map[ty][tx] == TILE_CORRIDOR then
+                return
+            end
+        end
+    end
+
+    for ty = y, y + wallThickness - 1 do
+        for tx = startX, endX do
             if MapUtils:isWalkableTile(map, tx, ty) then
-                map[ty][tx] = 2
+                map[ty][tx] = TILE_WALL
             end
         end
     end
@@ -124,8 +133,16 @@ function Theme:_generateVerticalWall(room)
 
     for tx = x, x + wallThickness - 1 do
         for ty = startY, endY do
+            if map[ty][tx] == TILE_CORRIDOR then
+                return
+            end
+        end
+    end
+
+    for tx = x, x + wallThickness - 1 do
+        for ty = startY, endY do
             if MapUtils:isWalkableTile(map, tx, ty) then
-                map[ty][tx] = 2
+                map[ty][tx] = TILE_WALL
             end
         end
     end

@@ -48,8 +48,8 @@ function LabTheme:_canPlacePillar(tx, ty)
     end
 
     -- pas collé à un mur
-    if self.map[ty-1][tx] == 2 or self.map[ty+1][tx] == 2
-       or self.map[ty][tx-1] == 2 or self.map[ty][tx+1] == 2 then
+    if self.map[ty-1][tx] == TILE_WALL or self.map[ty+1][tx] == TILE_WALL
+       or self.map[ty][tx-1] == TILE_WALL or self.map[ty][tx+1] == TILE_WALL then
         return false
     end
 

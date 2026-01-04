@@ -10,6 +10,14 @@ function love.conf(t)
     FLASHLIGHT_DISABLED  = true
     FREEZE               = false
 
+    -- Code tiles
+    TILE_EMPTY = 0
+    TILE_FLOOR = 1
+    TILE_WALL = 2
+    TILE_PROP = 3
+    TILE_GLASS = 4
+    TILE_CORRIDOR = 5
+
 
     t.window.title = "Latente Fear"
     t.window.width = W_MAX_WIDTH

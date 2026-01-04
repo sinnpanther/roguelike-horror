@@ -122,13 +122,13 @@ function Room:_canPlacePillar(tx, ty)
     local map = self.level.map
 
     -- doit être du sol
-    if map[ty][tx] ~= 1 then
+    if map[ty][tx] ~= TILE_FLOOR then
         return false
     end
 
     -- pas collé à un mur
-    if map[ty-1][tx] == 2 or map[ty+1][tx] == 2
-            or map[ty][tx-1] == 2 or map[ty][tx+1] == 2 then
+    if map[ty-1][tx] == TILE_WALL or map[ty+1][tx] == TILE_WALL
+            or map[ty][tx-1] == TILE_WALL or map[ty][tx+1] == TILE_WALL then
         return false
     end
 
@@ -140,7 +140,7 @@ function Room:spawnPillarsFromMap()
 
     for y = self.rect.y, self.rect.y + self.rect.h - 1 do
         for x = self.rect.x, self.rect.x + self.rect.w - 1 do
-            if self.level.map[y][x] == 3 then
+            if self.level.map[y][x] == TILE_PROP then
                 table.insert(self.props, Pillar(self.world, x, y, self.theme))
             end
         end

@@ -77,13 +77,13 @@ function Level:buildTileBatches()
             local px = (x - 1) * self.ts
             local py = (y - 1) * self.ts
 
-            if tile == 1 then
+            if tile == TILE_FLOOR or tile == TILE_CORRIDOR then
                 self.floorBatch:add(self.floorQuad, px, py)
 
-            elseif tile == 2 then
+            elseif tile == TILE_WALL then
                 self.wallBatch:add(self.wallQuad, px, py)
 
-            elseif tile == 4 then
+            elseif tile == TILE_GLASS then
                 -- verre = sol normal (visuel identique) + contour
                 self.floorBatch:add(self.floorQuad, px, py)
 
@@ -165,7 +165,7 @@ function Level:drawGlassDetails()
 end
 
 function Level:generate()
-    self:_initTiles(0)
+    self:_initTiles(TILE_EMPTY)
 
     local roomCount = self.rng:random(2, 5) -- exemple
     self:_placeRooms(roomCount)
@@ -288,7 +288,7 @@ end
 function Level:_carveRoom(rect)
     for y = rect.y, rect.y + rect.h - 1 do
         for x = rect.x, rect.x + rect.w - 1 do
-            self.map[y][x] = 1 -- sol
+            self.map[y][x] = TILE_FLOOR -- sol
         end
     end
 end
@@ -308,9 +308,9 @@ function Level:_carveH(x1, x2, y)
     local from = math.min(x1, x2)
     local to   = math.max(x1, x2)
     for x = from, to do
-        self.map[y][x] = 1
+        self.map[y][x] = TILE_CORRIDOR
         -- largeur de couloir optionnelle
-        self.map[y+1][x] = 1
+        self.map[y+1][x] = TILE_CORRIDOR
     end
 end
 
@@ -318,9 +318,9 @@ function Level:_carveV(y1, y2, x)
     local from = math.min(y1, y2)
     local to   = math.max(y1, y2)
     for y = from, to do
-        self.map[y][x] = 1
+        self.map[y][x] = TILE_CORRIDOR
         -- largeur optionnelle
-        self.map[y][x+1] = 1
+        self.map[y][x+1] = TILE_CORRIDOR
     end
 end
 
@@ -328,7 +328,7 @@ function Level:_buildAutoWalls()
     for y = 1, self.mapH do
         for x = 1, self.mapW do
             if self.map[y][x] == 0 and self:_hasAdjacentFloor(x, y) then
-                self.map[y][x] = 2
+                self.map[y][x] = TILE_WALL
             end
         end
     end
@@ -337,7 +337,7 @@ end
 function Level:_buildWallColliders()
     for y = 1, self.mapH do
         for x = 1, self.mapW do
-            if self.map[y][x] == 2 then
+            if self.map[y][x] == TILE_WALL then
                 local px = (x - 1) * self.ts
                 local py = (y - 1) * self.ts
 
@@ -377,7 +377,7 @@ function Level:buildQuads()
     for y = 1, self.mapH do
         self.quads[y] = {}
         for x = 1, self.mapW do
-            if self.map[y][x] == 2 then
+            if self.map[y][x] == TILE_WALL then
                 self.quads[y][x] = AutoTile.getQuad(
                         self.map,
                         x,
