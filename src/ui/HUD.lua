@@ -13,6 +13,23 @@ function HUD:draw(level, displaySeed)
 
     -- Seed (en petit, c'est une info technique)
     love.graphics.print("SEED : " .. displaySeed, 20, 40)
+
+    -- BARRE DE VIE PLAYER
+    local barW = 140
+    local barH = 12
+    local x = 20
+    local y = love.graphics.getHeight() - 30
+
+    -- Fond
+    love.graphics.setColor(1, 1, 1, 0.7)
+    love.graphics.rectangle("line", x, y, barW, barH)
+
+    -- Vie
+    local ratio = self.player.hp / self.player.maxHp
+    love.graphics.setColor(0.8, 0.1, 0.1, 1)
+    love.graphics.rectangle("fill", x, y, barW * ratio, barH)
+
+    love.graphics.setColor(1, 1, 1)
 end
 
 return HUD

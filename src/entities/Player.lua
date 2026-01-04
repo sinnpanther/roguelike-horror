@@ -28,6 +28,15 @@ function Player:new(world, level, x, y, room)
     self.entityType = "player"
     self.room = room
 
+    -- Vie du joueur
+    self.maxHp = 5
+    self.hp = self.maxHp
+    self.isDead = false
+
+    -- Invincibilité courte après coup
+    self.invincibleTime = 0
+    self.invincibleDuration = 0.6
+
     -- Mouvement
     self.speed = 300
     self.angle = 0
@@ -121,6 +130,11 @@ function Player:update(dt, cam)
 
     -- Arme
     self.weapon:update(dt)
+
+    -- Invincibilité temporaire
+    if self.invincibleTime > 0 then
+        self.invincibleTime = math.max(0, self.invincibleTime - dt)
+    end
 end
 
 function Player:draw()
@@ -190,6 +204,30 @@ function Player:canSee(enemy)
 end
 
 ---------------------
+-- Attaque
+---------------------
+function Player:attack()
+    if self.weapon then
+        self.weapon:tryAttack(self.angle or 0)
+    end
+end
+
+function Player:takeDamage(amount)
+    if self.invincibleTime > 0 or self.isDead then
+        return
+    end
+
+    self.hp = self.hp - amount
+    self.invincibleTime = self.invincibleDuration
+
+    if self.hp <= 0 then
+        self.hp = 0
+        self.isDead = true
+        -- plus tard : animation / game over
+    end
+end
+
+---------------------
 -- Sons
 ---------------------
 function Player:_handleStep(dt, shouldStep)
@@ -234,6 +272,45 @@ end
 
 function Player:getVCenter()
     return Vector(self.x + self.w / 2, self.y + self.h / 2)
+end
+
+function Player:debug()
+    local cx, cy = self:getCenter()
+
+    -- Lampe torche
+    love.graphics.setColor(0, 0, 1, 0.10)
+    love.graphics.arc(
+            "fill",
+            cx,
+            cy,
+            self.visionRange,
+            self.angle - self.flashlight.coneAngle,
+            self.angle + self.flashlight.coneAngle,
+            32
+    )
+    love.graphics.setColor(0, 0, 1)
+
+    -- Infos
+    love.graphics.print(
+            string.format(
+                    "canSee: %s",
+                    tostring(self.canSeeEnemy)
+            ),
+            self.x,
+            self.y - 40
+    )
+
+    -- Direction centrale (ligne)
+    love.graphics.setColor(0, 1, 0, 1)
+    local dx = math.cos(self.angle) * self.visionRange
+    local dy = math.sin(self.angle) * self.visionRange
+    love.graphics.line(cx, cy, cx + dx, cy + dy)
+
+    -- Point central
+    love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
+    love.graphics.circle("line", cx, cy, self.visionRange)
+
+    love.graphics.setColor(1, 1, 1)
 end
 
 return Player
