@@ -3,6 +3,8 @@ local Vector = require "libs.hump.vector"
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
 local MathUtils = require "src.utils.math_utils"
+local VisionUtils = require "src.utils.vision_utils"
+
 -- Entities
 local Flashlight = require "src.entities.lighting.Flashlight"
 local Knife = require "src.entities.weapons.Knife"
@@ -120,15 +122,29 @@ function Player:canSee(enemy)
         return false
     end
 
-    local map = self.level.map
+    local w, h = enemy.w or 0, enemy.h or 0
+    local ox = math.min(4, w * 0.25)
+    local oy = math.min(4, h * 0.25)
+    local px, py = self:getCenter()
+    local ex, ey = enemy:getCenter()
 
-    local px = math.floor(self.x / TILE_SIZE) + 1
-    local py = math.floor(self.y / TILE_SIZE) + 1
+    local points = {
+        { ex, ey },
+        { enemy.x + ox,     enemy.y + oy },
+        { enemy.x + w-ox,   enemy.y + oy },
+        { enemy.x + ox,     enemy.y + h-oy },
+        { enemy.x + w-ox,   enemy.y + h-oy },
+    }
 
-    local ex = math.floor(enemy.x / TILE_SIZE) + 1
-    local ey = math.floor(enemy.y / TILE_SIZE) + 1
+    local visible = false
+    for _, p in ipairs(points) do
+        if VisionUtils.hasLineOfSight(self.level, px, py, p[1], p[2], 1.0) then
+            visible = true
+            break
+        end
+    end
 
-    if not WorldUtils.hasLineOfSight(map, px, py, ex, ey) then
+    if not visible then
         return false
     end
 

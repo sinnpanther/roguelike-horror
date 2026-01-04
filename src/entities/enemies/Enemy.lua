@@ -1,6 +1,8 @@
+-- Dependancies
 local Vector = require "libs.hump.vector"
-local MathUtils = require "src.utils.math_utils"
+-- Utils
 local WorldUtils = require "src.utils.world_utils"
+local VisionUtils = require "src.utils.vision_utils"
 
 local Enemy = Class:extend()
 
@@ -32,7 +34,7 @@ function Enemy:new(world, level, x, y)
     self.state = "idle"
     self.canSeePlayer = nil
 
-    self.visionRange = 250
+    self.visionRange = 300
     self.fov = math.rad(80)
     self.angle = 0
 
@@ -162,15 +164,29 @@ function Enemy:canSee(player)
         return false
     end
 
-    local map = self.level.map
+    local w, h = self.w or 0, self.h or 0
+    local ox = math.min(4, w * 0.25)
+    local oy = math.min(4, h * 0.25)
+    local px, py = player:getCenter()
+    local ex, ey = self:getCenter()
 
-    local ex = math.floor(self.x / TILE_SIZE) + 1
-    local ey = math.floor(self.y / TILE_SIZE) + 1
+    local points = {
+        { ex, ey },
+        { self.x + ox,     self.y + oy },
+        { self.x + w-ox,   self.y + oy },
+        { self.x + ox,     self.y + h-oy },
+        { self.x + w-ox,   self.y + h-oy },
+    }
 
-    local px = math.floor(player.x / TILE_SIZE) + 1
-    local py = math.floor(player.y / TILE_SIZE) + 1
+    local visible = false
+    for _, p in ipairs(points) do
+        if VisionUtils.hasLineOfSight(self.level, px, py, p[1], p[2], 1.0) then
+            visible = true
+            break
+        end
+    end
 
-    if not WorldUtils.hasLineOfSight(map, ex, ey, px, py) then
+    if not visible then
         return false
     end
 
