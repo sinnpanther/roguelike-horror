@@ -28,6 +28,10 @@ function Player:new(world, level, x, y, room)
     self.entityType = "player"
     self.room = room
 
+    -- Sprites
+    self.sprite = love.graphics.newImage("assets/graphics/sprites/player/player.png")
+    self.sprite:setFilter("nearest", "nearest")
+
     -- Vie du joueur
     self.maxHp = 5
     self.hp = self.maxHp
@@ -138,8 +142,11 @@ function Player:update(dt, cam)
 end
 
 function Player:draw()
-    love.graphics.setColor(0.2, 0.6, 1)
-    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+    love.graphics.draw(
+            self.sprite,
+            self.pos.x,
+            self.pos.y
+    )
 
     self.weapon:draw()
 
