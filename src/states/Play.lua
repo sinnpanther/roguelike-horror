@@ -122,7 +122,8 @@ local function detachCamSnapped(self)
 end
 
 function Play:draw()
-    love.graphics.clear(0, 0, 0)
+    love.graphics.setCanvas( {POST_CANVAS, stencil = true })
+    love.graphics.clear(0, 0, 0, 1)
 
     --------------------------------------------------
     -- 1. DESSIN NORMAL DU MONDE (CAM SNAP)
@@ -133,6 +134,11 @@ function Play:draw()
     detachCamSnapped(self)
 
     if FLASHLIGHT_DISABLED then
+        love.graphics.setCanvas()
+
+        -- Dessin direct (sans post-process)
+        love.graphics.draw(POST_CANVAS, 0, 0)
+
         self.hud:draw(self.levelIndex, self.seed)
 
         return
@@ -182,6 +188,17 @@ function Play:draw()
 
     love.graphics.setStencilTest()
 
+    love.graphics.setCanvas()
+
+    --------------------------------------------------
+    -- 6. POST-PROCESS : VHS
+    --------------------------------------------------
+    VHS_SHADER:send("time", love.timer.getTime())
+    VHS_SHADER:send("intensity", 0.4)
+
+    love.graphics.setShader(VHS_SHADER)
+    love.graphics.draw(POST_CANVAS, 0, 0)
+    love.graphics.setShader()
     --------------------------------------------------
     -- 5. HUD
     --------------------------------------------------

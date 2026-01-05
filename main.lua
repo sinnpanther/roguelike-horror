@@ -19,6 +19,14 @@ function love.load()
     })
     love.graphics.setDefaultFilter("nearest", "nearest")
 
+    POST_CANVAS = love.graphics.newCanvas(
+            love.graphics.getWidth(),
+            love.graphics.getHeight()
+    )
+
+    -- Shader de grain
+    VHS_SHADER = love.graphics.newShader("assets/shaders/vhs.glsl")
+
     -- Register basic callbacks (update, draw, etc.)
     GameState.registerEvents()
 
