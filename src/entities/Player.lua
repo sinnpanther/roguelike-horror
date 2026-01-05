@@ -45,8 +45,8 @@ function Player:new(world, level, x, y, room)
     -- Vision
     self.visionRange = 420
     self.fov = math.rad(90)
-
     self.flashlight = Flashlight(self)
+    self.circleRadius = self.flashlight:getCircle() + 10
     self.canSeeEnemy = false
 
     -- Arme
@@ -163,6 +163,17 @@ function Player:canSee(enemy)
         return false
     end
 
+    local px, py = self:getCenter()
+    local ex, ey = enemy:getCenter()
+    local circleRadius = self.circleRadius
+
+    if distance <= circleRadius then
+        -- LOS quand même (mur / pilier)
+        if VisionUtils.hasLineOfSight(self.level, px, py, ex, ey, 1.0) then
+            return true
+        end
+    end
+
     -- 3. Direction du regard du joueur
     local forward = Vector(math.cos(self.angle), math.sin(self.angle))
 
@@ -183,8 +194,6 @@ function Player:canSee(enemy)
     local w, h = enemy.w or 0, enemy.h or 0
     local ox = math.min(4, w * 0.25)
     local oy = math.min(4, h * 0.25)
-    local px, py = self:getCenter()
-    local ex, ey = enemy:getCenter()
 
     local points = {
         { ex, ey },
