@@ -14,7 +14,7 @@ function Crate:new(world, x, y, theme)
     self.sprite = love.graphics.newImage(
             "assets/graphics/props/" .. theme .. "/crate.png"
     )
-    self.sprite:setFilter("nearest", "nearest")
+    --self.sprite:setFilter("nearest", "nearest")
 end
 
 function Crate:draw()

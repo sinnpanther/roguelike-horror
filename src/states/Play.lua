@@ -48,6 +48,7 @@ function Play:enter()
     -- HUD + Cam
     self.hud = HUD(self.player)
     self.cam = Camera(self.player.x, self.player.y)
+    self.cam:zoomTo(1.2)
 end
 
 function Play:update(dt)

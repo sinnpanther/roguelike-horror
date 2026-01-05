@@ -35,23 +35,63 @@ end
 function Menu:draw()
     love.graphics.setBackgroundColor(0.1, 0.1, 0.1)
 
-    -- Titre
-    love.graphics.setFont(self.titleFont)
-    love.graphics.printf("Latente Fear", 0, 150, love.graphics.getWidth(), "center")
+    local screenW = love.graphics.getWidth()
+    local screenH = love.graphics.getHeight()
 
-    -- Options
+    -- === PARAMÈTRES MENU ===
+    local titleYSpacing = 40        -- espace entre titre et options
+    local optionSpacing = 50        -- espace entre chaque option
+    local optionCount = #self.options
+
+    -- === POLICES ===
+    love.graphics.setFont(self.titleFont)
+    local titleHeight = self.titleFont:getHeight()
+
+    love.graphics.setFont(self.font)
+    local optionHeight = self.font:getHeight()
+
+    -- === HAUTEUR TOTALE DU MENU ===
+    local menuHeight =
+    titleHeight +
+            titleYSpacing +
+            (optionCount * optionHeight) +
+            ((optionCount - 1) * (optionSpacing - optionHeight))
+
+    -- === POINT DE DÉPART VERTICAL (centrage) ===
+    local startY = (screenH - menuHeight) / 2
+
+    -- === DESSIN DU TITRE ===
+    love.graphics.setFont(self.titleFont)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.printf(
+            "Latente Fear",
+            0,
+            startY,
+            screenW,
+            "center"
+    )
+
+    -- === DESSIN DES OPTIONS ===
     love.graphics.setFont(self.font)
     for i, option in ipairs(self.options) do
-        local color = {0.5, 0.5, 0.5} -- Gris par défaut
-
         if i == self.selection then
-            color = {1, 1, 0} -- Jaune si sélectionné
+            love.graphics.setColor(1, 1, 0)
+        else
+            love.graphics.setColor(0.5, 0.5, 0.5)
         end
 
-        love.graphics.setColor(color)
-        love.graphics.printf(option, 0, 300 + (i * 50), love.graphics.getWidth(), "center")
+        local y = startY + titleHeight + titleYSpacing + (i - 1) * optionSpacing
+
+        love.graphics.printf(
+                option,
+                0,
+                y,
+                screenW,
+                "center"
+        )
     end
-    love.graphics.setColor(1, 1, 1) -- Reset couleur
+
+    love.graphics.setColor(1, 1, 1)
 end
 
 function Menu:leave()

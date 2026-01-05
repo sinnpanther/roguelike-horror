@@ -15,7 +15,7 @@ function Table:new(world, x, y, theme)
     self.sprite = love.graphics.newImage(
             "assets/graphics/props/" .. theme .. "/table.png"
     )
-    self.sprite:setFilter("nearest", "nearest")
+    --self.sprite:setFilter("nearest", "nearest")
 end
 
 function Table:draw()

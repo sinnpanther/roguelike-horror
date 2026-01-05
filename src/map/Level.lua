@@ -37,7 +37,6 @@ function Level:new(world, seed, levelIndex)
     self.theme = self:_pickTheme()
 
     self.tileset = love.graphics.newImage("assets/graphics/tiles/tileset.png")
-    self.tileset:setFilter("nearest", "nearest")
 
     local tw, th = self.tileset:getWidth(), self.tileset:getHeight()
 

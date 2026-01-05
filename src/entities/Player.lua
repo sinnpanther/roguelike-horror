@@ -30,7 +30,6 @@ function Player:new(world, level, x, y, room)
 
     -- Sprites
     self.sprite = love.graphics.newImage("assets/graphics/sprites/player/player.png")
-    self.sprite:setFilter("nearest", "nearest")
 
     -- Vie du joueur
     self.maxHp = 5

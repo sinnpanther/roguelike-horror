@@ -12,12 +12,12 @@ States = {
 }
 
 function love.load()
-    love.window.setMode(
-            love.graphics.getWidth(),
-            love.graphics.getHeight(),
-            { msaa = 8 }
-    )
-    love.graphics.setDefaultFilter("linear", "linear")
+    love.window.setMode(0, 0, {
+        fullscreen = true,
+        fullscreentype = "desktop",
+        vsync = 1
+    })
+    love.graphics.setDefaultFilter("nearest", "nearest")
 
     -- Register basic callbacks (update, draw, etc.)
     GameState.registerEvents()
