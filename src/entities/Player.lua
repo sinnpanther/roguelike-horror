@@ -26,6 +26,7 @@ function Player:new(world, level, x, y, room)
     self.w, self.h = 32, 32
     self.type = "player"
     self.entityType = "player"
+    self.controlsEnabled = true
     self.room = room
 
     -- Sprites
@@ -69,6 +70,11 @@ function Player:new(world, level, x, y, room)
 end
 
 function Player:update(dt, cam)
+    if not self.controlsEnabled then
+        -- On garde l'orientation souris + logique passive
+        return
+    end
+
     local dir = self.moveDir
     dir.x, dir.y = 0, 0
 

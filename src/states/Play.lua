@@ -262,6 +262,10 @@ function Play:keypressed(key)
         self:nextLevel()
     end
 
+    if key == "i" then
+        GameState.push(States.Inventory)
+    end
+
     if key == "tab" then
         local Menu = require "src.states.Menu"
         GameState.switch(Menu)

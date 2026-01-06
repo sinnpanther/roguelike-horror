@@ -8,7 +8,8 @@ SoundManager = require "src.audio.SoundManager"
 States = {
     Menu = require "src.states.Menu",
     Play = require "src.states.Play",
-    Victory = require "src.states.Victory"
+    Victory = require "src.states.Victory",
+    Inventory = require "src.states.Inventory"
 }
 
 function love.load()
