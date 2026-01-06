@@ -241,6 +241,7 @@ function Enemy:onHit(damage, fromAngle)
     self.hp = self.hp - damage
     if self.hp <= 0 then
         self.state = "dead"
+        self.isDead = true
         return
     end
 

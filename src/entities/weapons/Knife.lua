@@ -54,14 +54,13 @@ function Knife:applyDamage()
 
     for i = 1, len do
         local enemy = items[i]
-        -- On ne retape pas un ennemi déjà touché pendant ce slash
+
+        -- Ne pas retaper le même ennemi pendant le même coup
         if not enemy.isDead and not self.alreadyHit[enemy] then
             self.alreadyHit[enemy] = true
 
-            enemy.hp = (enemy.hp or 1) - self.damage
-            if enemy.hp <= 0 then
-                enemy.isDead = true
-            end
+            -- APPEL CENTRAL
+            enemy:onHit(self.damage, self.angle)
         end
     end
 end
