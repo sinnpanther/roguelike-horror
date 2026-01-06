@@ -3,6 +3,8 @@ local MapUtils = require "src.utils.map_utils"
 
 local HospitalTheme = Theme:extend()
 
+HospitalTheme.NAME = "Hôpital"
+
 function HospitalTheme:new(level)
     HospitalTheme.super.new(self, level)
 

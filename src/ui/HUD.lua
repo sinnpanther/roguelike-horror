@@ -9,10 +9,11 @@ function HUD:draw(level, displaySeed)
     love.graphics.setColor(1, 1, 1, 1) -- Blanc
 
     -- Niveau actuel
-    love.graphics.print("ETAGE : " .. level, 20, 20)
+    love.graphics.print("ETAGE : " .. level.levelIndex, 20, 20)
 
+    love.graphics.print("Thème : " .. level.theme.NAME, 20, 40)
     -- Seed (en petit, c'est une info technique)
-    love.graphics.print("SEED : " .. displaySeed, 20, 40)
+    love.graphics.print("SEED : " .. displaySeed, 20, 60)
 
     -- BARRE DE VIE PLAYER
     local barW = 140

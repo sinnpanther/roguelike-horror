@@ -1,52 +1,76 @@
--- src/states/Play.lua
-
 -- Requirements
 local Camera = require "libs.hump.camera"
 local Vector = require "libs.hump.vector"
 
-local Play = {}
 local Player = require "src.entities.Player"
 local HUD = require "src.ui.HUD"
 local Level = require "src.map.Level"
+local ThemeSelect = require "src.states.ThemeSelect"
 
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
 local MathUtils = require "src.utils.math_utils"
 
+local Play = {}
+
 ----------------------------------------------------------------
 -- State
 ----------------------------------------------------------------
 function Play:enter()
-    self.world = Bump.newWorld(64)
-    self.levelIndex = 1
+    -- INIT UNE SEULE FOIS
+    if not self.world then
+        self.world = Bump.newWorld(64)
+        self.levelIndex = 1
 
-    -- Seed unique pour toute la run
-    self.seed = MathUtils.generateBase36Seed(8)
-    self.numericSeed = MathUtils.hashString(self.seed)
+        self.seed = MathUtils.generateBase36Seed(8)
+        self.numericSeed = MathUtils.hashString(self.seed)
+        self.rng = love.math.newRandomGenerator(self.numericSeed)
 
-    DEBUG_CURRENT_SEED = self.seed
-    DEBUG_CURRENT_LEVEL = self.levelIndex
+        DEBUG_CURRENT_SEED = self.seed
+        DEBUG_CURRENT_LEVEL = self.levelIndex
 
-    -- Génération du level
-    self.level = Level(self.world, self.numericSeed, self.levelIndex)
+        self.hud = nil
+        self.player = nil
+    end
+
+    -- GARDE : si pas de thème, on affiche l’UI
+    if not self.selectedTheme then
+        GameState.switch(ThemeSelect, {
+            rng = self.rng,
+            onSelect = function(ThemeClass)
+                self.selectedTheme = ThemeClass
+                GameState.switch(self)
+            end
+        })
+        return
+    end
+
+    -- SINON, on démarre le level
+    self:_startLevel()
+end
+
+function Play:_startLevel()
+    self.level = Level(self.world, self.rng, self.levelIndex)
+
+    -- On force le thème choisi
+    self.level.theme = self.selectedTheme(self.level)
+
     self.level:generate()
-
-    -- Room principale (celle où on démarre)
     self.mainRoom = self.level.mainRoom
 
-    local spawnX, spawnY = self.mainRoom:getRandomSpawn()
-    self.player = Player(self.world, self.level, spawnX, spawnY)
+    local spawnX, spawnY = self.mainRoom:getRandomSpawn(self.player)
+    if not self.player then
+        self.player = Player(self.world, self.level, spawnX, spawnY)
+        self.hud = HUD(self.player)
+        self.cam = Camera(self.player.x, self.player.y)
+        self.cam:zoomTo(1.2)
+    else
+        self.player.level = self.level
+        MathUtils.updateCoordinates(self.player, spawnX, spawnY)
+        self.world:update(self.player, self.player.x, self.player.y)
+    end
 
-    -- si w/h sont définis après
-    spawnX, spawnY = self.mainRoom:getRandomSpawn(self.player)
-    MathUtils.updateCoordinates(self.player, spawnX, spawnY)
-    self.world:update(self.player, self.player.x, self.player.y)
     self.level.spatialHash:add(self.player)
-
-    -- HUD + Cam
-    self.hud = HUD(self.player)
-    self.cam = Camera(self.player.x, self.player.y)
-    self.cam:zoomTo(1.2)
 end
 
 function Play:update(dt)
@@ -91,9 +115,6 @@ function Play:update(dt)
     end
 
     self.cam:lookAt(px, py)
-
-    -- Flicker
-    --self.player.flashlight.flickerTime = self.player.flashlight.flickerTime + dt
 
     -- Transition (on abandonne les portes/sides pour l’instant)
     if self.player.hasReachedExit then
@@ -142,7 +163,7 @@ function Play:draw()
         -- Dessin direct (sans post-process)
         love.graphics.draw(POST_CANVAS, 0, 0)
 
-        self.hud:draw(self.levelIndex, self.seed)
+        self.hud:draw(self.level, self.seed)
 
         return
     end
@@ -205,11 +226,10 @@ function Play:draw()
     --------------------------------------------------
     -- 5. HUD
     --------------------------------------------------
-    self.hud:draw(self.levelIndex, self.seed)
+    self.hud:draw(self.level, self.seed)
 end
 
 function Play:nextLevel()
-    -- Fin de jeu
     if self.levelIndex >= 10 then
         GameState.switch(States.Victory, {
             seed = self.seed,
@@ -218,49 +238,24 @@ function Play:nextLevel()
         return
     end
 
-    -- --------------------------------------------------
-    -- 1. Nettoyage COMPLET de l'ancien level
-    -- --------------------------------------------------
-
-    -- Retirer toutes les entités non-joueur de Bump
     WorldUtils.clearWorld(self.world)
-
-    -- Vider explicitement le spatial hash de l'ancien level
     self.level.spatialHash.cells = {}
-
-    -- --------------------------------------------------
-    -- 2. Génération du nouveau level
-    -- --------------------------------------------------
 
     self.levelIndex = self.levelIndex + 1
     DEBUG_CURRENT_LEVEL = self.levelIndex
 
-    self.level = Level(self.world, self.numericSeed, self.levelIndex)
-    self.level:generate()
-    self.mainRoom = self.level.mainRoom
-    self.player.level = self.level
-
-    -- --------------------------------------------------
-    -- 3. Repositionnement du joueur
-    -- --------------------------------------------------
-
-    local spawnX, spawnY = self.mainRoom:getRandomSpawn(self.player)
-    MathUtils.updateCoordinates(self.player, spawnX, spawnY)
-    self.world:update(self.player, self.player.x, self.player.y)
-
-    -- IMPORTANT : ré-enregistrer le player dans le spatial hash
-    self.level.spatialHash:add(self.player)
-
-    -- --------------------------------------------------
-    -- 4. Reset état transition
-    -- --------------------------------------------------
+    -- RESET
+    self.selectedTheme = nil
     self.player.hasReachedExit = false
+
+    GameState.switch(self)
 end
 
 
 function Play:keypressed(key)
     if key == "r" then
-        GameState.switch(Play)
+        self:resetRun()
+        GameState.switch(self)
     end
 
     if key == "n" then
@@ -293,6 +288,28 @@ function Play:debug()
         love.graphics.rectangle("line", x, y, w, h)
         love.graphics.print(items[i].type or "unknown", x, y - 15)
     end
+end
+
+function Play:resetRun()
+    -- Monde / gameplay
+    self.world = nil
+    self.level = nil
+    self.player = nil
+    self.hud = nil
+    self.cam = nil
+
+    -- Progression
+    self.levelIndex = nil
+    self.selectedTheme = nil
+
+    -- Seed / RNG
+    self.seed = nil
+    self.numericSeed = nil
+    self.rng = nil
+
+    -- Debug
+    DEBUG_CURRENT_SEED = "NONE"
+    DEBUG_CURRENT_LEVEL = 1
 end
 
 return Play

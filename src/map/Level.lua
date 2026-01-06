@@ -2,24 +2,17 @@
 local Room = require "src.map.Room"
 local SpatialHash = require "src.map.SpatialHash"
 
--- Themes
-local LabTheme = require "src.map.themes.LabTheme"
-local HospitalTheme = require "src.map.themes.HospitalTheme"
-local GraveyardTheme = require "src.map.themes.GraveyardTheme"
-
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
 local MapUtils = require "src.utils.map_utils"
 
 local Level = Class:extend()
 
-function Level:new(world, seed, levelIndex)
+function Level:new(world, rng, levelIndex)
     self.world = world
-    self.seed = seed
+    self.rng = rng
     self.levelIndex = levelIndex
     self.spatialHash = SpatialHash(TILE_SIZE * 2)
-
-    self.rng = love.math.newRandomGenerator(seed + levelIndex)
 
     self.ts = TILE_SIZE
     self.mapW, self.mapH = 200, 160 -- en tiles (à ajuster)
@@ -34,7 +27,7 @@ function Level:new(world, seed, levelIndex)
     self.rooms = {}
     self.walls = {}
 
-    self.theme = self:_pickTheme()
+    self.theme = nil
 
     self.tileset = love.graphics.newImage("assets/graphics/tiles/tileset.png")
 
@@ -49,13 +42,6 @@ function Level:new(world, seed, levelIndex)
     -- SpriteBatches (remplis après génération)
     self.floorBatch = nil
     self.wallBatch  = nil
-end
-
-function Level:_pickTheme()
-    local themes = { LabTheme, HospitalTheme }
-    local ThemeClass = themes[self.rng:random(1, #themes)]
-
-    return ThemeClass(self)
 end
 
 function Level:buildTileBatches()

@@ -2,6 +2,8 @@ local Theme = require "src.map.themes.Theme"
 
 local LabTheme = Theme:extend()
 
+LabTheme.NAME = "Laboratoire"
+
 function LabTheme:generateRoom(room)
     LabTheme.super.generateRoom(self, room)
 

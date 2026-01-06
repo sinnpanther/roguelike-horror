@@ -2,6 +2,10 @@ local Theme = require "src.map.themes.Theme"
 
 local GraveyardTheme = Theme:extend()
 
-function GraveyardTheme:generateRoom(room)
+GraveyardTheme.NAME = "Cimetière"
 
-end
+--function GraveyardTheme:generateRoom(room)
+--
+--end
+
+return GraveyardTheme
