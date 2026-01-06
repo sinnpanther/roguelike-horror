@@ -18,8 +18,6 @@ local MathUtils = require "src.utils.math_utils"
 ----------------------------------------------------------------
 function Play:enter()
     self.world = Bump.newWorld(64)
-    self.screenW = love.graphics.getWidth()
-    self.screenH = love.graphics.getHeight()
     self.levelIndex = 1
 
     -- Seed unique pour toute la run
@@ -131,6 +129,11 @@ function Play:draw()
     attachCamSnapped(self)
     self.level:draw(self.player)
     self.player:draw()
+
+    if DEBUG_MODE then
+        self:debug()
+        self.level.spatialHash:drawDebug()
+    end
     detachCamSnapped(self)
 
     if FLASHLIGHT_DISABLED then
@@ -290,9 +293,6 @@ function Play:debug()
         love.graphics.rectangle("line", x, y, w, h)
         love.graphics.print(items[i].type or "unknown", x, y - 15)
     end
-
-    love.graphics.setColor(1, 1, 1)
-    love.graphics.printf("DEBUG MODE - FPS: " .. love.timer.getFPS(), 10, 10, self.screenW - 20, "right")
 end
 
 return Play

@@ -30,6 +30,14 @@ function HUD:draw(level, displaySeed)
     love.graphics.rectangle("fill", x, y, barW * ratio, barH)
 
     love.graphics.setColor(1, 1, 1)
+
+    if DEBUG_MODE then
+        self:debug()
+    end
+end
+
+function HUD:debug()
+    love.graphics.printf("DEBUG MODE - FPS: " .. love.timer.getFPS(), 10, 10, love.graphics.getWidth() - 20, "right")
 end
 
 return HUD
