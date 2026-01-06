@@ -21,7 +21,7 @@ function WorldUtils.clearWorld(world)
 end
 
 function WorldUtils.playerFilter(item, other)
-    if other.entityType == "door" or other.entityType == "enemy" then
+    if other.entityType == "enemy" then
         return "cross"
     end
 
