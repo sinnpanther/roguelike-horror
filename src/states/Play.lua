@@ -121,7 +121,7 @@ end
 
 function Play:draw()
     love.graphics.setCanvas( {POST_CANVAS, stencil = true })
-    love.graphics.clear(0, 0, 0, 1)
+    love.graphics.clear()
 
     --------------------------------------------------
     -- 1. DESSIN NORMAL DU MONDE (CAM SNAP)

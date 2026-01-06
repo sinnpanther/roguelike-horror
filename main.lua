@@ -12,17 +12,14 @@ States = {
 }
 
 function love.load()
-    love.window.setMode(0, 0, {
-        fullscreen = true,
-        fullscreentype = "desktop",
-        vsync = 1
-    })
+    --love.window.setMode(0, 0, {
+    --    fullscreen = true,
+    --    fullscreentype = "desktop",
+    --    vsync = 1
+    --})
     love.graphics.setDefaultFilter("nearest", "nearest")
 
-    POST_CANVAS = love.graphics.newCanvas(
-            love.graphics.getWidth(),
-            love.graphics.getHeight()
-    )
+    POST_CANVAS = love.graphics.newCanvas(love.graphics.getWidth(), love.graphics.getHeight())
 
     -- Shader de grain
     VHS_SHADER = love.graphics.newShader("assets/shaders/vhs.glsl")
