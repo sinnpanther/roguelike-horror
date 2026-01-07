@@ -31,7 +31,7 @@ function Room:getRandomSpawn(player)
                 self.rect.y + self.rect.h - 2
         )
 
-        -- ✅ uniquement du SOL
+        -- Uniquement du SOL
         if map[ty] and MapUtils:isWalkableTile(map, tx, ty) then
             local px = (tx - 1) * ts
             local py = (ty - 1) * ts

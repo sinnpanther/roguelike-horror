@@ -3,12 +3,11 @@ local MapUtils = require "src.utils.map_utils"
 
 local HospitalTheme = Theme:extend()
 
+HospitalTheme.ID = "hospital"
 HospitalTheme.NAME = "Hôpital"
 
 function HospitalTheme:new(level, seed)
     HospitalTheme.super.new(self, level, seed)
-
-    self.id = "hospital"
 
     -- Réglages verre
     self.glassChancePerRoom = 0.75    -- 75% des rooms ont du verre
@@ -24,9 +23,9 @@ function HospitalTheme:new(level, seed)
 end
 
 -- Appelé pour CHAQUE room
-function HospitalTheme:generateRoom(room)
+function HospitalTheme:generateScenery(room)
     -- 1) Garde le comportement de base (murs internes)
-    Theme.generateRoom(self, room)
+    Theme.generateScenery(self, room)
 
     -- 2) Ajoute le verre
     self:_generateGlass(room)

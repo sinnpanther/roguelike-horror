@@ -2,12 +2,11 @@ local Theme = require "src.map.themes.Theme"
 
 local LabTheme = Theme:extend()
 
+LabTheme.ID = "laboratory"
 LabTheme.NAME = "Laboratoire"
 
-function LabTheme:generateRoom(room)
-    LabTheme.super.generateRoom(self, room)
-
-    self.id = "lab"
+function LabTheme:generateScenery(room)
+    LabTheme.super.generateScenery(self, room)
 
     -- 1 chance sur 2
     if self.rng:random() < 0.5 then

@@ -10,12 +10,16 @@ end
 
 function Theme:generate()
     for _, room in ipairs(self.level.rooms) do
-        self:generateRoom(room)
+        self:generateScenery(room)
     end
 end
 
 -- Appelé pour CHAQUE room
-function Theme:generateRoom(room)
+function Theme:generateScenery(room)
+    self:_generateWalls(room)
+end
+
+function Theme:_generateWalls(room)
     -- 1 chance sur 2 pour un renfoncement
     if self.rng:random() < 0.5 then
         self:_generateInternalWall(room)
