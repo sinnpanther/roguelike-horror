@@ -74,8 +74,7 @@ function Knife:draw()
     local px, py = self.player:getCenter()
     local r = self.offset + self.w * 0.5
 
-    love.graphics.setColor(1, 1, 1, 0.9)
-    love.graphics.setLineWidth(3)
+    love.graphics.setColor(1, 1, 1)
     love.graphics.arc(
         "line",
         px, py,
@@ -83,8 +82,6 @@ function Knife:draw()
         self.angle - math.rad(25),
         self.angle + math.rad(25)
     )
-    love.graphics.setLineWidth(1)
-    love.graphics.setColor(1, 1, 1)
 end
 
 function Knife:slash(angle)
