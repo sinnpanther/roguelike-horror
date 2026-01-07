@@ -31,6 +31,7 @@ function Play:enter()
 
         self.hud = nil
         self.player = nil
+        self.theme = nil
     end
 
     -- GARDE : si pas de thème, on affiche l’UI
@@ -85,11 +86,11 @@ function Play:update(dt)
     end
 
     -- Nettoyage des ennemis morts sur TOUTES les rooms du level
-    for _, seg in ipairs(self.level.segments or {}) do
-        for i = #seg.enemies, 1, -1 do
-            local e = seg.enemies[i]
+    for _, room in ipairs(self.level.rooms or {}) do
+        for i = #room.enemies, 1, -1 do
+            local e = room.enemies[i]
             if e.isDead then
-                e:destroyEnemy(e, seg, i)
+                e:destroyEnemy(e, room, i)
             end
         end
     end

@@ -1,12 +1,23 @@
 local Corridor = Class:extend()
 
-function Corridor:new(corridorSeed, level)
+function Corridor:new(corridorSeed, level, profile)
     self.rng = love.math.newRandomGenerator(corridorSeed)
     self.rooms = level.rooms
     self.map = level.map
+    self.profile = profile
 end
 
 function Corridor:build()
+    if self.profile.layout == "laboratory" then
+        self:_buildLaboratory()
+    elseif self.profile.layout == "hub" then
+        self:_buildHub()
+    elseif self.profile.layout == "arena" then
+        -- pas de corridors
+    end
+end
+
+function Corridor:_buildLaboratory()
     -- connect rooms (simple: chain)
     table.sort(self.rooms, function(a,b) return a:centerX() < b:centerX() end)
     for i = 2, #self.rooms do
@@ -14,6 +25,16 @@ function Corridor:build()
         local bx, by = self.rooms[i]:centerTile()
         self:_carve(ax, ay, bx, by)
     end
+end
+
+function Corridor:_buildHub()
+    ---- connect rooms (hub)
+    --local centerRoom = self.rooms[math.floor(#self.rooms / 2)]
+    --local centerTileX, centerTileY = centerRoom:centerTile()
+    --for _, room in ipairs(self.rooms) do
+    --    local tileX, tileY = room:centerTile()
+    --    self:_carve(centerTileX, centerTileY, tileX, tileY)
+    --end
 end
 
 function Corridor:_carve(ax, ay, bx, by)

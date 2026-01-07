@@ -1,6 +1,7 @@
 -- Dependancies
-local Room = require "src.map.Room"
-local Corridor = require "src.map.Corridor"
+local LayoutFactory = require "src.map.layouts.LayoutFactory"
+--local Room = require "src.map.Room"
+--local Corridor = require "src.map.Corridor"
 local SpatialHash = require "src.map.SpatialHash"
 
 -- Utils
@@ -153,29 +154,47 @@ end
 function Level:generate()
     self:_initTiles(TILE_EMPTY)
 
-    local roomCount = self.rng:random(2, 5) -- exemple
-    self:_placeRooms(roomCount)
+    local profile = self.theme:getProfile()
+    local layout = LayoutFactory.create(profile, self)
 
-    local corridorSeed = self.rng:random(1, 2^30)
-    local corridor = Corridor(corridorSeed, self)
-    corridor:build()
+    layout:build()
 
-    -- Generate theme
-    self.theme:generate()
-
-    self:_buildAutoWalls()
-    self:_buildWallColliders()
-    self:buildTileBatches()
-
-    -- Spawn enemies, props, etc
-    for _, room in ipairs(self.rooms) do
-        -- Props
-        room:spawnPillarsFromMap()
-        room:spawnEnemies()
+    --------------------------------------------------
+    -- WALLS
+    --------------------------------------------------
+    if profile.hasOuterWalls then
+        self:_buildAutoWalls()
+        self:_buildWallColliders()
     end
 
-    -- si tu veux garder un équivalent "segments"
-    self.segments = self.rooms
+    --------------------------------------------------
+    -- CONTENT PER ROOM
+    --------------------------------------------------
+    for _, room in ipairs(self.rooms) do
+        if profile.hasInternalWalls then
+            room:buildInternalWalls(profile)
+        end
+
+        if profile.hasPillars then
+            room:generatePillars(profile)
+        end
+
+        if profile.hasProps then
+            room:spawnProps(profile)
+        end
+
+        if profile.hasEnemies then
+            room:spawnEnemies(profile)
+        end
+
+        self.theme:decorate(room)
+    end
+
+    --------------------------------------------------
+    -- TILE BATCHES
+    --------------------------------------------------
+    self:buildTileBatches()
+
     self.mainRoom = self.rooms[1]
 end
 
@@ -217,61 +236,6 @@ function Level:_initTiles(fillValue)
         self.map[y] = {}
         for x = 1, self.mapW do
             self.map[y][x] = fillValue
-        end
-    end
-end
-
-function Level:_placeRooms(roomCount)
-    local maxAttempts = roomCount * 40
-    local attempts = 0
-
-    while #self.rooms < roomCount and attempts < maxAttempts do
-        attempts = attempts + 1
-
-        local w = self.rng:random(20, 28)
-        local h = self.rng:random(18, 24)
-        -- Zone centrale plus dense
-        local marginX = math.floor(self.mapW * 0.25)
-        local marginY = math.floor(self.mapH * 0.25)
-
-        local x = self.rng:random(marginX, self.mapW - marginX - w)
-        local y = self.rng:random(marginY, self.mapH - marginY - h)
-
-        local rect = { x = x, y = y, w = w, h = h }
-
-        if not self:_rectOverlapsAny(rect, 3) then
-            self:_carveRoom(rect)
-            local roomSeed = self.rng:random(1, 2^30)
-            table.insert(self.rooms, Room(self.world, self, roomSeed, self.levelIndex, rect))
-        end
-    end
-end
-
-function Level:_rectOverlapsAny(rect, padding)
-    for _, r in ipairs(self.rooms) do
-        local a = rect
-        local b = r.rect
-        if self:_rectsOverlap(a, b, padding) then
-            return true
-        end
-    end
-    return false
-end
-
-function Level:_rectsOverlap(a, b, padding)
-    local p = padding or 0
-    return not (
-        a.x + a.w + p < b.x or
-        a.x > b.x + b.w + p or
-        a.y + a.h + p < b.y or
-        a.y > b.y + b.h + p
-    )
-end
-
-function Level:_carveRoom(rect)
-    for y = rect.y, rect.y + rect.h - 1 do
-        for x = rect.x, rect.x + rect.w - 1 do
-            self.map[y][x] = TILE_FLOOR -- sol
         end
     end
 end
@@ -323,23 +287,23 @@ function Level:_hasAdjacentFloor(x, y)
     return false
 end
 
-function Level:buildQuads()
-    self.quads = {}
-
-    for y = 1, self.mapH do
-        self.quads[y] = {}
-        for x = 1, self.mapW do
-            if self.map[y][x] == TILE_WALL then
-                self.quads[y][x] = AutoTile.getQuad(
-                        self.map,
-                        x,
-                        y,
-                        self.tileset
-                )
-            end
-        end
-    end
-end
+--function Level:buildQuads()
+--    self.quads = {}
+--
+--    for y = 1, self.mapH do
+--        self.quads[y] = {}
+--        for x = 1, self.mapW do
+--            if self.map[y][x] == TILE_WALL then
+--                self.quads[y][x] = AutoTile.getQuad(
+--                        self.map,
+--                        x,
+--                        y,
+--                        self.tileset
+--                )
+--            end
+--        end
+--    end
+--end
 
 --------------------------------------------------
 -- Tile lookup à partir de coordonnées monde (pixels)

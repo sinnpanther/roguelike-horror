@@ -5,56 +5,33 @@ local LabTheme = Theme:extend()
 LabTheme.ID = "laboratory"
 LabTheme.NAME = "Laboratoire"
 
-function LabTheme:generateScenery(room)
-    LabTheme.super.generateScenery(self, room)
+function LabTheme:getProfile()
+    return {
+        layout = self.ID,
 
-    -- 1 chance sur 2
-    if self.rng:random() < 0.5 then
-        self:_generatePillarRectangle(room)
-    end
-end
+        roomShape = "rect",
+        roomCount = { min = 4, max = 7 },
 
--- Pattern spécifique LAB
-function LabTheme:_generatePillarRectangle(room)
-    if room.rect.w < 8 or room.rect.h < 8 then
-        return
-    end
+        hasCorridors = true,
+        corridorWidth = 2,
 
-    local margin = 4
+        hasOuterWalls = true,
+        hasInternalWalls = true,
+        internalWallChance = 0.6,
 
-    local left   = room.rect.x + margin
-    local right  = room.rect.x + room.rect.w - margin - 1
-    local top    = room.rect.y + margin
-    local bottom = room.rect.y + room.rect.h - margin - 1
+        hasPillars = true,
+        pillarChance = 0.5,
 
-    local positions = {
-        { left,  top },
-        { right, top },
-        { left,  bottom },
-        { right, bottom },
+        hasProps = false,
+        propChance = 0,
+
+        hasEnemies = true,
+        enemyChance = 0.8,
     }
-
-    for _, p in ipairs(positions) do
-        local tx, ty = p[1], p[2]
-        if self:_canPlacePillar(tx, ty) then
-            self.map[ty][tx] = 3
-        end
-    end
 end
 
-function LabTheme:_canPlacePillar(tx, ty)
-    -- doit être du sol
-    if self.map[ty][tx] ~= 1 then
-        return false
-    end
+function LabTheme:decorate(room)
 
-    -- pas collé à un mur
-    if self.map[ty-1][tx] == TILE_WALL or self.map[ty+1][tx] == TILE_WALL
-       or self.map[ty][tx-1] == TILE_WALL or self.map[ty][tx+1] == TILE_WALL then
-        return false
-    end
-
-    return true
 end
 
 return LabTheme

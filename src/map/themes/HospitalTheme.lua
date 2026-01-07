@@ -6,67 +6,87 @@ local HospitalTheme = Theme:extend()
 HospitalTheme.ID = "hospital"
 HospitalTheme.NAME = "Hôpital"
 
-function HospitalTheme:new(level, seed)
-    HospitalTheme.super.new(self, level, seed)
+function HospitalTheme:getProfile()
+    return {
+        layout = self.ID,
+        roomShape = "rect",
 
-    -- Réglages verre
-    self.glassChancePerRoom = 0.75    -- 75% des rooms ont du verre
-    self.glassPatchesMin = 1
-    self.glassPatchesMax = 3
-    self.patchWMin = 2
-    self.patchWMax = 5
-    self.patchHMin = 2
-    self.patchHMax = 4
+        roomCount = { min = 4, max = 5 },
+        roomWidth = { min = 16, max = 20 },
+        roomHeight = { min = 13, max = 16 },
+        roomSpacing = 6,
+        roomGapFromCorridor = 3,
 
-    -- Évite les murs internes + bordures
-    self.glassMargin = 3
+        hasCorridors = true,
+        corridorWidth = 3,
+        corridorExtraLength = { min = 4, max = 10 },
+
+        hasOuterWalls = true,
+
+        hasInternalWalls = false,
+        internalWallChance = 0,
+
+        hasPillars = false,
+        pillarChance = 0,
+
+        hasProps = false,
+        propChance = 0,
+
+        hasEnemies = true,
+        enemyChance = 0.75,
+
+        glassChancePerRoom = 0.1
+    }
 end
 
--- Appelé pour CHAQUE room
-function HospitalTheme:generateScenery(room)
-    -- 1) Garde le comportement de base (murs internes)
-    Theme.generateScenery(self, room)
-
-    -- 2) Ajoute le verre
+--------------------------------------------------
+-- Décoration spécifique Hôpital
+--------------------------------------------------
+function HospitalTheme:decorate(room)
     self:_generateGlass(room)
 end
 
+--------------------------------------------------
+-- Verre
+--------------------------------------------------
 function HospitalTheme:_generateGlass(room)
-    if self.rng:random() > self.glassChancePerRoom then
+    local map = room.level.map
+    local rect = room.rect
+    local rng = room.rng
+    local profile = self:getProfile()
+
+    if rng:random() > profile.glassChancePerRoom then
         return
     end
-
-    local map = self.map
-    local rect = room.rect
 
     -- room trop petite
     if rect.w < 8 or rect.h < 8 then
         return
     end
 
-    local patches = self.rng:random(self.glassPatchesMin, self.glassPatchesMax)
+    local patches = rng:random(1, 3)
+    local margin = 3
 
     for _ = 1, patches do
-        local pw = self.rng:random(self.patchWMin, self.patchWMax)
-        local ph = self.rng:random(self.patchHMin, self.patchHMax)
+        local pw = rng:random(2, 5)
+        local ph = rng:random(2, 4)
 
-        local minX = rect.x + self.glassMargin
-        local minY = rect.y + self.glassMargin
-        local maxX = rect.x + rect.w - self.glassMargin - pw
-        local maxY = rect.y + rect.h - self.glassMargin - ph
+        local minX = rect.x + margin
+        local minY = rect.y + margin
+        local maxX = rect.x + rect.w - margin - pw
+        local maxY = rect.y + rect.h - margin - ph
 
         if minX >= maxX or minY >= maxY then
             break
         end
 
-        local sx = self.rng:random(minX, maxX)
-        local sy = self.rng:random(minY, maxY)
+        local sx = rng:random(minX, maxX)
+        local sy = rng:random(minY, maxY)
 
         for ty = sy, sy + ph do
             for tx = sx, sx + pw do
-                -- uniquement sur sol normal (1), jamais sur mur (2) ni déjà verre
                 if map[ty] and MapUtils:isWalkableTile(map, tx, ty) then
-                    map[ty][tx] = 4 -- verre
+                    map[ty][tx] = TILE_GLASS
                 end
             end
         end

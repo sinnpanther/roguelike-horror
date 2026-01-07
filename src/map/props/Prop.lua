@@ -21,7 +21,7 @@ function Prop:new(world, tileX, tileY, tileW, tileH, opts)
     self.blocksVision   = opts.blocksVision   or false
 
     self.type  = opts.type  or "generic"
-    self.theme = opts.theme or "generic"
+    self.theme = opts.theme.ID or "generic"
 
     if self.blocksMovement then
         self.collider = world:add(self, self.x, self.y, self.w, self.h)
