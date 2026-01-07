@@ -2,10 +2,10 @@ local MapUtils = require "src.utils.map_utils"
 
 local Room = Class:extend()
 
-function Room:new(world, level, rng, levelIndex, rect)
+function Room:new(world, level, seed, levelIndex, rect)
     self.world = world
     self.level = level
-    self.rng = rng
+    self.rng = love.math.newRandomGenerator(seed)
     self.levelIndex = levelIndex
     self.rect = rect
     self.ts = TILE_SIZE
@@ -74,7 +74,7 @@ function Room:_getRandomFloorTile()
         local tx = self.rng:random(self.rect.x + 1, self.rect.x + self.rect.w - 2)
         local ty = self.rng:random(self.rect.y + 1, self.rect.y + self.rect.h - 2)
 
-        -- ✅ uniquement du sol
+        -- Uniquement du sol
         if MapUtils:isWalkableTile(map, tx, ty) then
             return tx, ty
         end
@@ -103,10 +103,11 @@ function Room:spawnEnemies()
         local ey = (ty - 1) * self.ts
 
         local enemy
+        local enemySeed = self.rng:random(1, 2^30)
         if self.rng:random() < 0.5 then
-            enemy = Chaser(self.world, self.level, ex, ey)
+            enemy = Chaser(self.world, self.level, enemySeed, ex, ey)
         else
-            enemy = Watcher(self.world, self.level, ex, ey)
+            enemy = Watcher(self.world, self.level, enemySeed, ex, ey)
         end
         self.level.spatialHash:add(enemy)
 

@@ -24,7 +24,7 @@ function Play:enter()
 
         self.seed = MathUtils.generateBase36Seed(8)
         self.numericSeed = MathUtils.hashString(self.seed)
-        self.rng = love.math.newRandomGenerator(self.numericSeed)
+        self.runRng = love.math.newRandomGenerator(self.numericSeed)
 
         DEBUG_CURRENT_SEED = self.seed
         DEBUG_CURRENT_LEVEL = self.levelIndex
@@ -36,7 +36,7 @@ function Play:enter()
     -- GARDE : si pas de thème, on affiche l’UI
     if not self.selectedTheme then
         GameState.switch(ThemeSelect, {
-            rng = self.rng,
+            rng = self.runRng,
             onSelect = function(ThemeClass)
                 self.selectedTheme = ThemeClass
                 GameState.switch(self)
@@ -50,10 +50,13 @@ function Play:enter()
 end
 
 function Play:_startLevel()
-    self.level = Level(self.world, self.rng, self.levelIndex)
+    local levelSeed = self.runRng:random(1, 2^30)
+    self.level = Level(self.world, levelSeed, self.levelIndex)
 
     -- On force le thème choisi
-    self.level.theme = self.selectedTheme(self.level)
+    local themeSeed = self.level.rng:random(1, 2^30)
+    self.level.theme = self.selectedTheme(self.level, themeSeed)
+    self.selectedTheme = nil
 
     self.level:generate()
     self.mainRoom = self.level.mainRoom
@@ -309,7 +312,7 @@ function Play:resetRun()
     -- Seed / RNG
     self.seed = nil
     self.numericSeed = nil
-    self.rng = nil
+    self.runRng = nil
 
     -- Debug
     DEBUG_CURRENT_SEED = "NONE"

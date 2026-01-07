@@ -8,9 +8,9 @@ local MapUtils = require "src.utils.map_utils"
 
 local Level = Class:extend()
 
-function Level:new(world, rng, levelIndex)
+function Level:new(world, seed, levelIndex)
     self.world = world
-    self.rng = rng
+    self.rng = love.math.newRandomGenerator(seed)
     self.levelIndex = levelIndex
     self.spatialHash = SpatialHash(TILE_SIZE * 2)
 
@@ -53,7 +53,7 @@ function Level:buildTileBatches()
     self.floorBatch:clear()
     self.wallBatch:clear()
 
-    -- ✅ On garde une liste des tiles verre (en pixels) pour dessiner les contours
+    -- On garde une liste des tiles verre (en pixels) pour dessiner les contours
     self.glassTiles = {}
 
     for y = 1, self.mapH do
@@ -244,7 +244,8 @@ function Level:_placeRooms(roomCount)
 
         if not self:_rectOverlapsAny(rect, 3) then
             self:_carveRoom(rect)
-            table.insert(self.rooms, Room(self.world, self, self.rng, self.levelIndex, rect))
+            local roomSeed = self.rng:random(1, 2^30)
+            table.insert(self.rooms, Room(self.world, self, roomSeed, self.levelIndex, rect))
         end
     end
 end

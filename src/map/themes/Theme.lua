@@ -2,9 +2,9 @@ local MapUtils = require "src.utils.map_utils"
 
 local Theme = Class:extend()
 
-function Theme:new(level)
+function Theme:new(level, seed)
     self.level = level
-    self.rng = level.rng
+    self.rng = love.math.newRandomGenerator(seed)
     self.map = level.map
 end
 

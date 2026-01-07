@@ -7,8 +7,8 @@ local MathUtils = require "src.utils.math_utils"
 
 local Watcher = Enemy:extend()
 
-function Watcher:new(world, level, x, y)
-    Watcher.super.new(self, world, level, x, y)
+function Watcher:new(world, level, seed, x, y)
+    Watcher.super.new(self, world, level, seed, x, y)
 
     self.pos = Vector(x, y)
     self.hp = 3

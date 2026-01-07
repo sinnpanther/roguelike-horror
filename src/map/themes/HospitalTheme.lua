@@ -5,8 +5,8 @@ local HospitalTheme = Theme:extend()
 
 HospitalTheme.NAME = "Hôpital"
 
-function HospitalTheme:new(level)
-    HospitalTheme.super.new(self, level)
+function HospitalTheme:new(level, seed)
+    HospitalTheme.super.new(self, level, seed)
 
     self.id = "hospital"
 

@@ -7,9 +7,9 @@ local MathUtils = require "src.utils.math_utils"
 
 local Chaser = Enemy:extend()
 
-function Chaser:new(world, level, x, y)
+function Chaser:new(world, level, seed, x, y)
     -- HP: 3, Speed: 80
-    Chaser.super.new(self, world, level, x, y)
+    Chaser.super.new(self, world, level, seed, x, y)
     self.hp = 3
     self.maxHp = self.hp
     self.speed = 80
