@@ -13,6 +13,7 @@ function Enemy:new(world, level, x, y)
 
     self.world = world
     self.level = level
+    self.rng = self.level.rng
     self.x, self.y = x, y
     self.pos = Vector(x, y)
     self.w, self.h = 32, 32
@@ -47,6 +48,7 @@ function Enemy:new(world, level, x, y)
 
     -- State machine
     self.state = "idle"
+    self.prevState = nil
     self.canSeePlayer = nil
     self.stopDistance = 42
 
@@ -97,6 +99,8 @@ function Enemy:perceive(dt, player)
 end
 
 function Enemy:updateState(dt, player)
+    local previous = self.state
+
     if self.state == "dead" then
         return
     end
@@ -129,6 +133,13 @@ function Enemy:updateState(dt, player)
 
     -- 3) Sinon idle
     self.state = "idle"
+    if previous ~= self.state then
+        self:onStateEnter(self.state, previous)
+    end
+end
+
+function Enemy:onStateEnter(newState, oldState)
+    -- vide par défaut
 end
 
 function Enemy:act(dt, player)
@@ -196,8 +207,8 @@ function Enemy:searchBehavior(dt)
 
     -- collision bump
     local actualX, actualY = self.world:move(self, goalX, goalY, function() return "slide" end)
-    self.x, self.y = actualX, actualY
-    self.pos.x, self.pos.y = self.x, self.y
+    MathUtils.updateCoordinates(self, actualX, actualY)
+    self.level.spatialHash:update(self)
 
     -- regarde vers la target
     self.angle = math.atan2(target.y - (self.y + self.h/2), target.x - (self.x + self.w/2))
