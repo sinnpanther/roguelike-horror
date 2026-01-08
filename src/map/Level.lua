@@ -160,14 +160,6 @@ function Level:generate()
     layout:build()
 
     --------------------------------------------------
-    -- WALLS
-    --------------------------------------------------
-    if profile.hasOuterWalls then
-        self:_buildAutoWalls()
-        self:_buildWallColliders()
-    end
-
-    --------------------------------------------------
     -- CONTENT PER ROOM
     --------------------------------------------------
     for _, room in ipairs(self.rooms) do
@@ -188,6 +180,14 @@ function Level:generate()
         end
 
         self.theme:decorate(room)
+    end
+
+    --------------------------------------------------
+    -- WALLS
+    --------------------------------------------------
+    if profile.hasOuterWalls then
+        self:_buildAutoWalls()
+        self:_buildWallColliders()
     end
 
     --------------------------------------------------
