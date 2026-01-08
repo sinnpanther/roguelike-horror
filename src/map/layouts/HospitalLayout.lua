@@ -71,10 +71,10 @@ function HospitalLayout:_createRooms()
             h = data.h
         }
 
-        self:_carveRoom(rect)
-
         local roomSeed = self.rng:random(1, 2^30)
-        table.insert(level.rooms, Room(level.world, level, roomSeed, profile, rect))
+        local room = Room(level.world, level, roomSeed, profile, rect)
+        table.insert(level.rooms, room)
+        room:carve()
 
         cursorX = cursorX + data.w + self.roomSpacing
     end
@@ -104,19 +104,6 @@ function HospitalLayout:_createCorridor()
     local corridor = Corridor(corridorSeed, self.level, self.profile, data)
 
     corridor:build()
-end
-
---------------------------------------------------
--- CARVING
---------------------------------------------------
-function HospitalLayout:_carveRoom(rect)
-    local map = self.map
-
-    for y = rect.y, rect.y + rect.h - 1 do
-        for x = rect.x, rect.x + rect.w - 1 do
-            map[y][x] = TILE_FLOOR
-        end
-    end
 end
 
 return HospitalLayout

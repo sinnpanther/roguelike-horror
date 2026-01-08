@@ -14,7 +14,7 @@ function Corridor:build()
         self:_buildLaboratory()
     elseif self.profile.layout == "hospital" then
         self:_buildHospital()
-    elseif self.profile.layout == "arena" then
+    --elseif self.profile.layout == "arena" then
         -- pas de corridors
     end
 end

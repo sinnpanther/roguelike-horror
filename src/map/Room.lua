@@ -21,12 +21,12 @@ function Room:carve()
 
     if shape == "rect" then
         self:_carveRect()
-    elseif shape == "organic" then
-        self:_carveOrganic()
-    elseif shape == "blob" then
-        self:_carveBlob()
-    elseif shape == "single" then
-        self:_carveSingle()
+    --elseif shape == "organic" then
+    --    self:_carveOrganic()
+    --elseif shape == "blob" then
+    --    self:_carveBlob()
+    --elseif shape == "single" then
+    --    self:_carveSingle()
     end
 end
 
