@@ -167,14 +167,6 @@ function Level:generate()
             room:buildInternalWalls(profile)
         end
 
-        if profile.hasPillars then
-            room:generatePillars(profile)
-        end
-
-        if profile.hasProps then
-            room:spawnProps(profile)
-        end
-
         if profile.hasEnemies then
             room:spawnEnemies(profile)
         end
@@ -218,8 +210,9 @@ function Level:draw()
         end
     end
 
-    for _, room in ipairs(self.rooms) do
-        for _, prop in ipairs(room.props) do
+    local profile = self.theme:getProfile()
+    if profile.hasProps then
+        for _, prop in ipairs(self.props) do
             prop:draw()
         end
     end
@@ -228,6 +221,10 @@ end
 function Level:drawWallsOnly()
     if self.wallBatch then
         love.graphics.draw(self.wallBatch, 0, 0)
+    end
+
+    for _, prop in ipairs(self.props) do
+        prop:draw()
     end
 end
 
@@ -245,19 +242,6 @@ function Level:_buildAutoWalls()
         for x = 1, self.mapW do
             if self.map[y][x] == 0 and self:_hasAdjacentFloor(x, y) then
                 self.map[y][x] = TILE_WALL
-            end
-        end
-    end
-end
-
-function Level:_buildWallColliders()
-    for y = 1, self.mapH do
-        for x = 1, self.mapW do
-            if self.map[y][x] == TILE_WALL then
-                local px = (x - 1) * self.ts
-                local py = (y - 1) * self.ts
-
-                WorldUtils.addWall(self.world, self.walls, px, py, self.ts, self.ts)
             end
         end
     end
@@ -285,6 +269,19 @@ function Level:_hasAdjacentFloor(x, y)
     end
 
     return false
+end
+
+function Level:_buildWallColliders()
+    for y = 1, self.mapH do
+        for x = 1, self.mapW do
+            if self.map[y][x] == TILE_WALL then
+                local px = (x - 1) * self.ts
+                local py = (y - 1) * self.ts
+
+                WorldUtils.addWall(self.world, self.walls, px, py, self.ts, self.ts)
+            end
+        end
+    end
 end
 
 --function Level:buildQuads()

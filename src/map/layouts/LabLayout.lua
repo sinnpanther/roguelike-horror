@@ -1,6 +1,9 @@
--- src/map/layouts/LabLayout.lua
+-- Dependancies
 local Room = require "src.map.Room"
 local Corridor = require "src.map.Corridor"
+local Pillar = require "src.map.props.Pillar"
+-- Utils
+local MapUtils = require "src.utils.map_utils"
 
 local LabLayout = Class:extend()
 
@@ -17,6 +20,9 @@ end
 function LabLayout:build()
     self:_createRooms()
     self:_createCorridors()
+    if self.profile.hasPillars then
+        self:_placeProps()
+    end
 end
 
 --------------------------------------------------
@@ -51,8 +57,8 @@ function LabLayout:_placeRooms(roomCount)
         if not self:_rectOverlapsAny(rect, 3) then
             local roomSeed = self.rng:random(1, 2^30)
             local room = Room(self.world, self.level, roomSeed, profile, rect)
-            room:carve(profile)
             table.insert(self.level.rooms, room)
+            room:carve(profile)
         end
     end
 end
@@ -91,6 +97,74 @@ function LabLayout:_createCorridors()
     local corridor = Corridor(corridorSeed, self.level, self.profile)
 
     corridor:build()
+end
+
+function LabLayout:_placeProps()
+    for _, room in ipairs(self.level.rooms) do
+        self:generatePillars(room)
+        self:_buildPillars(room)
+    end
+end
+
+function LabLayout:generatePillars(room)
+    local profile = self.profile
+
+    if not profile.hasPillars then
+        return
+    end
+
+    if self.rng:random() > profile.pillarChance then
+        return
+    end
+
+    if room.rect.w < 8 or room.rect.h < 8 then
+        return
+    end
+
+    local margin = 4
+
+    local left   = room.rect.x + margin
+    local right  = room.rect.x + room.rect.w - margin - 1
+    local top    = room.rect.y + margin
+    local bottom = room.rect.y + room.rect.h - margin - 1
+
+    local positions = {
+        { left,  top },
+        { right, top },
+        { left,  bottom },
+        { right, bottom },
+    }
+
+    for _, p in ipairs(positions) do
+        local tx, ty = p[1], p[2]
+        if self:_canPlacePillar(tx, ty) then
+            self.level.map[ty][tx] = TILE_PROP
+        end
+    end
+end
+
+function LabLayout:_canPlacePillar(tx, ty)
+    local map = self.level.map
+
+    -- Si ce n'est pas une tile acceptable
+    if not MapUtils:isWalkableTile(map, tx, ty) then
+        return false
+    end
+
+    return true
+end
+
+function LabLayout:_buildPillars(room)
+    local level = self.level
+    level.props = level.props or {}
+
+    for y = room.rect.y, room.rect.y + room.rect.h - 1 do
+        for x = room.rect.x, room.rect.x + room.rect.w - 1 do
+            if level.map[y][x] == TILE_PROP then
+                table.insert(level.props, Pillar(self.world, x, y, { theme = level.theme }))
+            end
+        end
+    end
 end
 
 return LabLayout

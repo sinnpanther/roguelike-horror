@@ -1,5 +1,6 @@
 local HospitalLayout = require "src.map.layouts.HospitalLayout"
 local LabLayout = require "src.map.layouts.LabLayout"
+local GraveyardLayout = require "src.map.layouts.GraveyardLayout"
 
 local LayoutFactory = {}
 
@@ -9,10 +10,10 @@ function LayoutFactory.create(profile, level)
 
     if name == "hospital" then
         return HospitalLayout(level, profile, seed)
-    end
-
-    if name == "laboratory" then
+    elseif name == "laboratory" then
         return LabLayout(level, profile, seed)
+    elseif name == "graveyard" then
+        return GraveyardLayout(level, profile, seed)
     end
 
     error("Unknown layout: " .. tostring(name))

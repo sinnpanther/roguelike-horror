@@ -21,8 +21,8 @@ function Room:carve()
 
     if shape == "rect" then
         self:_carveRect()
-    --elseif shape == "organic" then
-    --    self:_carveOrganic()
+    elseif shape == "organic" then
+        self:_carveOrganic()
     --elseif shape == "blob" then
     --    self:_carveBlob()
     --elseif shape == "single" then
@@ -36,6 +36,41 @@ function Room:_carveRect()
     for y = self.rect.y, self.rect.y + self.rect.h - 1 do
         for x = self.rect.x, self.rect.x + self.rect.w - 1 do
             map[y][x] = TILE_FLOOR
+        end
+    end
+end
+
+function Room:_carveOrganic()
+    local map = self.level.map
+    local rng = self.rng
+
+    -- 1) Remplissage plein
+    self:_carveRect()
+
+    -- 2) Érosion des bords
+    local erosionDepth = self.profile.erosionDepth or 3
+    local erosionChance = self.profile.propChance or 0.35
+
+    for y = self.rect.y, self.rect.y + self.rect.h - 1 do
+        for x = self.rect.x, self.rect.x + self.rect.w - 1 do
+            local distLeft   = x - self.rect.x
+            local distRight  = self.rect.x + self.rect.w - 1 - x
+            local distTop    = y - self.rect.y
+            local distBottom = self.rect.y + self.rect.h - 1 - y
+
+            local edgeDist = math.min(
+                    distLeft,
+                    distRight,
+                    distTop,
+                    distBottom
+            )
+
+            if edgeDist <= erosionDepth then
+                local chance = erosionChance * (1 - edgeDist / erosionDepth)
+                if rng:random() < chance then
+                    map[y][x] = TILE_PROP
+                end
+            end
         end
     end
 end
@@ -268,71 +303,6 @@ function Room:_buildVerticalWall()
         for ty = startY, endY do
             if MapUtils:isWalkableTile(map, tx, ty) then
                 map[ty][tx] = TILE_WALL
-            end
-        end
-    end
-end
-
---------------------------------
--- Props
---------------------------------
-
--- Pillars
-function Room:generatePillars(profile)
-    if not profile.hasPillars then
-        return
-    end
-
-    if self.rng:random() > profile.pillarChance then
-        return
-    end
-
-    if self.rect.w < 8 or self.rect.h < 8 then
-        return
-    end
-
-    local margin = 4
-
-    local left   = self.rect.x + margin
-    local right  = self.rect.x + self.rect.w - margin - 1
-    local top    = self.rect.y + margin
-    local bottom = self.rect.y + self.rect.h - margin - 1
-
-    local positions = {
-        { left,  top },
-        { right, top },
-        { left,  bottom },
-        { right, bottom },
-    }
-
-    for _, p in ipairs(positions) do
-        local tx, ty = p[1], p[2]
-        if self:_canPlacePillar(tx, ty) then
-            self.level.map[ty][tx] = TILE_PROP
-        end
-    end
-
-    self:_buildPillars()
-end
-
-function Room:_canPlacePillar(tx, ty)
-    local map = self.level.map
-
-    -- Si ce n'est pas une tile acceptable
-    if not MapUtils:isWalkableTile(map, tx, ty) then
-        return false
-    end
-
-    return true
-end
-
-function Room:_buildPillars()
-    local Pillar = require "src.map.props.Pillar"
-
-    for y = self.rect.y, self.rect.y + self.rect.h - 1 do
-        for x = self.rect.x, self.rect.x + self.rect.w - 1 do
-            if self.level.map[y][x] == TILE_PROP then
-                table.insert(self.props, Pillar(self.world, x, y, self.theme))
             end
         end
     end
