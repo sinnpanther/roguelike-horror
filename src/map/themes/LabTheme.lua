@@ -11,6 +11,8 @@ function LabTheme:getProfile()
 
         roomShape = "rect",
         roomCount = { min = 4, max = 7 },
+        roomWidth = { min = 20, max = 28 },
+        roomHeight = { min = 18, max = 24 },
 
         hasCorridors = true,
         corridorWidth = 2,

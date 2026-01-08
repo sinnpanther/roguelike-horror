@@ -37,12 +37,12 @@ function LabLayout:_placeRooms(roomCount)
     while #self.level.rooms < roomCount and attempts < maxAttempts do
         attempts = attempts + 1
 
-        local w = self.rng:random(20, 28)
-        local h = self.rng:random(18, 24)
         -- Zone centrale plus dense
         local marginX = math.floor(self.mapW * 0.25)
         local marginY = math.floor(self.mapH * 0.25)
 
+        local w = self.rng:random(profile.roomWidth.min, profile.roomWidth.max)
+        local h = self.rng:random(profile.roomHeight.min, profile.roomHeight.max)
         local x = self.rng:random(marginX, self.mapW - marginX - w)
         local y = self.rng:random(marginY, self.mapH - marginY - h)
 
