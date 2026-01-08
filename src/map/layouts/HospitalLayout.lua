@@ -1,4 +1,5 @@
 local Room = require "src.map.Room"
+local Corridor = require "src.map.Corridor"
 
 local HospitalLayout = Class:extend()
 
@@ -15,25 +16,7 @@ end
 function HospitalLayout:build()
     self:_computeCorridorPosition()
     self:_createRooms()
-    self:_createMainCorridor()
-end
-
---------------------------------------------------
--- GLOBAL POSITIONING
---------------------------------------------------
-function HospitalLayout:_computeCorridorPosition()
-    local mapH = self.level.mapH
-
-    self.corridorSide = self.rng:random() < 0.5 and "top" or "bottom"
-
-    if self.corridorSide == "top" then
-        self.corridorY = math.floor(mapH * 0.20)
-    else
-        self.corridorY = math.floor(mapH * 0.65)
-    end
-
-    self.roomSpacing = self.profile.roomSpacing or 6
-    self.roomGapFromCorridor = self.profile.roomGapFromCorridor or 3
+    self:_createCorridor()
 end
 
 --------------------------------------------------
@@ -98,63 +81,29 @@ function HospitalLayout:_createRooms()
 end
 
 --------------------------------------------------
--- MAIN CORRIDOR
+-- Corridor
 --------------------------------------------------
-function HospitalLayout:_createMainCorridor()
-    local map = self.map
-    local rooms = self.level.rooms
-    local profile = self.profile
+function HospitalLayout:_computeCorridorPosition()
+    local mapH = self.level.mapH
 
-    if #rooms == 0 then
-        return
-    end
-
-    local extra = self.rng:random(
-            profile.corridorExtraLength.min,
-            profile.corridorExtraLength.max
-    )
-
-    local fromX = rooms[1].rect.x - extra
-    local last = rooms[#rooms]
-    local toX = last.rect.x + last.rect.w - 1 + extra
-
-    fromX = math.max(1, fromX)
-    toX = math.min(self.level.mapW - 1, toX)
-
-    local width = profile.corridorWidth or 2
-
-    for y = self.corridorY, self.corridorY + width - 1 do
-        for x = fromX, toX do
-            map[y][x] = TILE_CORRIDOR
-        end
-    end
-
-    for _, room in ipairs(rooms) do
-        self:_connectRoomToCorridor(room)
-    end
-end
-
---------------------------------------------------
--- ROOM → CORRIDOR CONNECTION
---------------------------------------------------
-function HospitalLayout:_connectRoomToCorridor(room)
-    local map = self.map
-    local doorX = math.floor(room.rect.x + room.rect.w / 2)
-
-    local fromY, toY
+    self.corridorSide = self.rng:random() < 0.5 and "top" or "bottom"
 
     if self.corridorSide == "top" then
-        fromY = self.corridorY + self.profile.corridorWidth
-        toY = room.rect.y
+        self.corridorY = math.floor(mapH * 0.20)
     else
-        fromY = room.rect.y + room.rect.h
-        toY = self.corridorY
+        self.corridorY = math.floor(mapH * 0.65)
     end
 
-    for y = fromY, toY do
-        map[y][doorX] = TILE_FLOOR
-        map[y][doorX + 1] = TILE_FLOOR
-    end
+    self.roomSpacing = self.profile.roomSpacing or 6
+    self.roomGapFromCorridor = self.profile.roomGapFromCorridor or 3
+end
+
+function HospitalLayout:_createCorridor()
+    local data = { y = self.corridorY, side = self.corridorSide }
+    local corridorSeed = self.rng:random(1, 2^30)
+    local corridor = Corridor(corridorSeed, self.level, self.profile, data)
+
+    corridor:build()
 end
 
 --------------------------------------------------
