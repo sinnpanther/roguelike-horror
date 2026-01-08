@@ -2,21 +2,22 @@ local MapUtils = require "src.utils.map_utils"
 
 local Room = Class:extend()
 
-function Room:new(world, level, seed, levelIndex, rect)
+function Room:new(world, level, seed, profile, rect)
     self.world = world
     self.level = level
+    self.levelIndex = level.levelIndex
     self.rng = love.math.newRandomGenerator(seed)
-    self.levelIndex = levelIndex
     self.rect = rect
     self.ts = TILE_SIZE
+    self.profile = profile
 
     self.enemies = {}
     self.props = {}
     self.theme = level.theme
 end
 
-function Room:carve(profile)
-    local shape = profile.roomShape
+function Room:carve()
+    local shape = self.profile.roomShape
 
     if shape == "rect" then
         self:_carveRect()
@@ -108,7 +109,7 @@ function Room:_getRandomFloorTile()
     return nil, nil
 end
 
-function Room:spawnEnemies(profile)
+function Room:spawnEnemies()
     local Chaser = require "src.entities.enemies.Chaser"
     local Watcher = require "src.entities.enemies.Watcher"
 
@@ -128,7 +129,7 @@ function Room:spawnEnemies(profile)
 
         local enemy
         local enemySeed = self.rng:random(1, 2^30)
-        if self.rng:random() < profile.enemyChance then
+        if self.rng:random() < self.profile.enemyChance then
             enemy = Chaser(self.world, self.level, enemySeed, ex, ey)
         else
             enemy = Watcher(self.world, self.level, enemySeed, ex, ey)

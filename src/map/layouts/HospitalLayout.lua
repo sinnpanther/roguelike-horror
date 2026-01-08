@@ -74,7 +74,7 @@ function HospitalLayout:_createRooms()
         self:_carveRoom(rect)
 
         local roomSeed = self.rng:random(1, 2^30)
-        table.insert(level.rooms, Room(level.world, level, roomSeed, level.levelIndex, rect))
+        table.insert(level.rooms, Room(level.world, level, roomSeed, profile, rect))
 
         cursorX = cursorX + data.w + self.roomSpacing
     end

@@ -6,7 +6,6 @@ local LabLayout = Class:extend()
 
 function LabLayout:new(level, profile, seed)
     self.level = level
-    self.levelIndex = level.levelIndex
     self.world = level.world
     self.map = level.map
     self.profile = profile
@@ -51,7 +50,7 @@ function LabLayout:_placeRooms(roomCount)
 
         if not self:_rectOverlapsAny(rect, 3) then
             local roomSeed = self.rng:random(1, 2^30)
-            local room = Room(self.world, self.level, roomSeed, self.levelIndex, rect)
+            local room = Room(self.world, self.level, roomSeed, profile, rect)
             room:carve(profile)
             table.insert(self.level.rooms, room)
         end
