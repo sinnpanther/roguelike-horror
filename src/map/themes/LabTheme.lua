@@ -1,4 +1,5 @@
 local Theme = require "src.map.themes.Theme"
+local LightAnglePuzzle = require "src.puzzles.LightAnglePuzzle"
 
 local LabTheme = Theme:extend()
 
@@ -29,6 +30,14 @@ function LabTheme:getProfile()
 
         hasEnemies = true,
         enemyChance = 0.8,
+
+        hasPuzzle = true,
+    }
+end
+
+function LabTheme:getPuzzles()
+    return {
+        LightAnglePuzzle,
     }
 end
 

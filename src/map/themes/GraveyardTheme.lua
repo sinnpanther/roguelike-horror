@@ -33,6 +33,8 @@ function GraveyardTheme:getProfile()
 
         hasEnemies = true,
         enemyChance = 0.8,
+
+        hasPuzzle = false,
     }
 end
 

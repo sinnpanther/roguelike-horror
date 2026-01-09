@@ -1,3 +1,5 @@
+local VisionUtils = require "src.utils.vision_utils"
+
 local Flashlight = Class:extend()
 
 --------------------------------------------------
@@ -166,18 +168,6 @@ function Flashlight:drawIrregularCone(level, radiusOffset, alpha)
 end
 
 --------------------------------------------------
--- INTERNAL: map helpers
---------------------------------------------------
-function Flashlight:_isWall(level, tx, ty)
-    local map = level.map
-    if not map[ty] or not map[ty][tx] then
-        return true -- hors map = bloquant
-    end
-
-    return map[ty][tx] == TILE_WALL or map[ty][tx] == TILE_PROP
-end
-
---------------------------------------------------
 -- Raycast DDA (Amanatides & Woo) sur grille
 -- Retourne une distance en pixels:
 -- - sinon : s'arrête à l'entrée du mur
@@ -236,7 +226,7 @@ function Flashlight:_raycastToWallDDA(level, ox, oy, angle, maxDist)
         local mapY = ty + 1
 
         -- Si c'est un mur -> on s'arrête AVANT d'entrer dans la tuile mur
-        if self:_isWall(level, mapX, mapY) then
+        if VisionUtils.isWall(level, mapX, mapY) then
             local hit = math.min(maxDist, tEnter - eps)
             return math.max(0, hit)
         end

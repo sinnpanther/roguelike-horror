@@ -24,7 +24,7 @@ end
 --------------------------------------------------
 function Corridor:_buildLaboratory()
     -- connect rooms (simple: chain)
-    table.sort(self.rooms, function(a,b) return a:centerX() < b:centerX() end)
+    table.sort(self.rooms, function(a,b) return a:getCenterX() < b:getCenterX() end)
     for i = 2, #self.rooms do
         local ax, ay = self.rooms[i-1]:centerTile()
         local bx, by = self.rooms[i]:centerTile()

@@ -35,7 +35,9 @@ function HospitalTheme:getProfile()
         hasEnemies = true,
         enemyChance = 0.75,
 
-        glassChancePerRoom = 0.1
+        glassChancePerRoom = 0.1,
+
+        hasPuzzle = false,
     }
 end
 

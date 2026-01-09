@@ -8,29 +8,11 @@ end
 
 -- Structure du niveau par défaut
 function Theme:getProfile()
-    return {
-        roomCount = { min = 3, max = 6 },
+    return {}
+end
 
-        layout = "chain", -- chain | hub | tree | arena
-        roomShape = "rect", -- rect | organic | blob | single
-        hasCorridors = true,
-        corridorWidth = 2,
-
-        hasOuterWalls = true, -- murs autour des rooms
-        hasInternalWalls = true, -- murs internes possibles
-        internalWallChance = 0.5,
-
-        hasPillars = true,
-        pillarChance = 0.5,
-
-        hasProps = true,
-        propChance = 0.6,
-
-        hasEnemies = true,
-        enemyChance = 0.5,
-
-        lighting = "normal",        -- plus tard
-    }
+function Theme:getPuzzles()
+    return {}
 end
 
 -- Décoration après génération

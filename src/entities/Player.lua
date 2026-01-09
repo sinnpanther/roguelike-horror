@@ -165,56 +165,71 @@ end
 ---------------------
 -- Vision
 ---------------------
-function Player:canSee(enemy)
-    -- 1. Vecteur joueur -> ennemi
-    local toEnemy = enemy.pos - self.pos
-    local distance = toEnemy:len()
+function Player:canSee(entity)
+    -- 1. Centres
+    local px, py = self:getCenter()
+    local ex, ey
 
-    -- 2. Test distance
+    if entity.getCenter then
+        ex, ey = entity:getCenter()
+    else
+        ex = entity.x
+        ey = entity.y
+    end
+
+    -- 2. Vecteur joueur → entité
+    local toTarget = Vector(ex - px, ey - py)
+    local distance = toTarget:len()
+
+    -- 3. Distance max
     if distance > self.visionRange then
         return false
     end
 
-    local px, py = self:getCenter()
-    local ex, ey = enemy:getCenter()
-    local circleRadius = self.circleRadius
-
-    if distance <= circleRadius then
-        -- LOS quand même (mur / pilier)
+    -- 4. Cercle proche (vision périphérique)
+    if distance <= self.circleRadius then
         if VisionUtils.hasLineOfSight(self.level, px, py, ex, ey, 1.0) then
             return true
         end
     end
 
-    -- 3. Direction du regard du joueur
+    -- 5. Direction regard
     local forward = Vector(math.cos(self.angle), math.sin(self.angle))
+    local dir = toTarget:normalized()
 
-    -- 4. Normalisation
-    local dir = toEnemy:normalized()
-
-    -- 5. Produit scalaire
+    -- 6. Angle
     local dot = forward.x * dir.x + forward.y * dir.y
-
-    -- 6. Angle max autorisé
     local maxAngle = math.cos(self.flashlight.coneAngle)
 
-    -- 7. Test angle
     if dot < maxAngle then
         return false
     end
 
-    local w, h = enemy.w or 0, enemy.h or 0
-    local ox = math.min(4, w * 0.25)
-    local oy = math.min(4, h * 0.25)
+    -- 7. Points de test (bounding box ou point unique)
+    local points = {}
 
-    local points = {
-        { ex, ey },
-        { enemy.x + ox,     enemy.y + oy },
-        { enemy.x + w-ox,   enemy.y + oy },
-        { enemy.x + ox,     enemy.y + h-oy },
-        { enemy.x + w-ox,   enemy.y + h-oy },
-    }
+    local w = entity.w or 0
+    local h = entity.h or 0
 
+    if w > 0 and h > 0 then
+        local ox = math.min(4, w * 0.25)
+        local oy = math.min(4, h * 0.25)
+
+        points = {
+            { ex, ey },
+            { entity.x + ox,     entity.y + oy },
+            { entity.x + w-ox,   entity.y + oy },
+            { entity.x + ox,     entity.y + h-oy },
+            { entity.x + w-ox,   entity.y + h-oy },
+        }
+    else
+        -- target ponctuelle (puzzle, bouton, etc)
+        points = {
+            { ex, ey }
+        }
+    end
+
+    -- 8. LOS final
     for _, p in ipairs(points) do
         if VisionUtils.hasLineOfSight(self.level, px, py, p[1], p[2], 1.0) then
             return true

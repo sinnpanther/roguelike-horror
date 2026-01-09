@@ -117,9 +117,16 @@ function Room:centerTile()
     return cx, cy
 end
 
-function Room:centerX()
-    local cx = self.rect.x + self.rect.w / 2
-    return cx
+function Room:getCenterX()
+    return self.rect.x + self.rect.w / 2
+end
+
+function Room:getCenterY()
+    return self.rect.y + self.rect.h / 2
+end
+
+function Room:getCenter()
+    return self:getCenterX(), self:getCenterY()
 end
 
 function Room:_getRandomFloorTile()

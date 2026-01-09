@@ -4,7 +4,7 @@ local VisionUtils = {}
 --------------------------------------------------
 -- Helpers
 --------------------------------------------------
-local function isWall(level, tx, ty)
+function VisionUtils.isWall(level, tx, ty)
     local map = level.map
     if not map[ty] or not map[ty][tx] then
         return true -- hors map = bloquant
@@ -82,7 +82,7 @@ function VisionUtils.hasLineOfSight(level, ax, ay, bx, by, epsilonPixels)
         local mapX = tx + 1
         local mapY = ty + 1
 
-        if isWall(level, mapX, mapY) then
+        if VisionUtils.isWall(level, mapX, mapY) then
             return false
         end
     end

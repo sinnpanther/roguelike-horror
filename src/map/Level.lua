@@ -1,8 +1,7 @@
 -- Dependancies
 local LayoutFactory = require "src.map.layouts.LayoutFactory"
---local Room = require "src.map.Room"
---local Corridor = require "src.map.Corridor"
 local SpatialHash = require "src.map.SpatialHash"
+local PuzzleManager = require "src.puzzles.PuzzleManager"
 
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
@@ -30,6 +29,8 @@ function Level:new(world, seed, levelIndex)
     self.walls = {}
 
     self.theme = nil
+    self.puzzleManager = nil
+    self.exitUnlocked = false
 
     self.tileset = love.graphics.newImage("assets/graphics/tiles/tileset.png")
 
@@ -154,21 +155,22 @@ end
 function Level:generate()
     self:_initTiles(TILE_EMPTY)
 
-    local profile = self.theme:getProfile()
-    local layout = LayoutFactory.create(profile, self)
+    self.profile = self.theme:getProfile()
+    local layout = LayoutFactory.create(self.profile, self)
 
     layout:build()
+    self.mainRoom = self.rooms[1]
 
     --------------------------------------------------
     -- CONTENT PER ROOM
     --------------------------------------------------
     for _, room in ipairs(self.rooms) do
-        if profile.hasInternalWalls then
-            room:buildInternalWalls(profile)
+        if self.profile.hasInternalWalls then
+            room:buildInternalWalls(self.profile)
         end
 
-        if profile.hasEnemies then
-            room:spawnEnemies(profile)
+        if self.profile.hasEnemies then
+            room:spawnEnemies(self.profile)
         end
 
         self.theme:decorate(room)
@@ -177,7 +179,7 @@ function Level:generate()
     --------------------------------------------------
     -- WALLS
     --------------------------------------------------
-    if profile.hasOuterWalls then
+    if self.profile.hasOuterWalls then
         self:_buildAutoWalls()
         self:_buildWallColliders()
     end
@@ -187,7 +189,18 @@ function Level:generate()
     --------------------------------------------------
     self:buildTileBatches()
 
-    self.mainRoom = self.rooms[1]
+    --------------------------------------------------
+    -- PUZZLES
+    --------------------------------------------------
+    if self.profile.hasPuzzle then
+        local puzzleManagerSeed = self.rng:random(1, 2^30)
+        self.puzzleManager = PuzzleManager(
+                self,
+                puzzleManagerSeed
+        )
+
+        self.puzzleManager:generate()
+    end
 end
 
 function Level:draw()
@@ -210,11 +223,14 @@ function Level:draw()
         end
     end
 
-    local profile = self.theme:getProfile()
-    if profile.hasProps then
+    if self.profile.hasProps then
         for _, prop in ipairs(self.props) do
             prop:draw()
         end
+    end
+
+    if self.profile.hasPuzzle then
+        self.puzzleManager:draw()
     end
 end
 
@@ -361,6 +377,14 @@ function Level:update(dt, player)
         for _, enemy in ipairs(room.enemies) do
             enemy:update(dt, player)
         end
+    end
+
+    if self.profile.hasPuzzle then
+        self.puzzleManager:update(dt, player)
+    end
+
+    if self.exitUnlocked then
+        print('Ouverture des portes...')
     end
 end
 
