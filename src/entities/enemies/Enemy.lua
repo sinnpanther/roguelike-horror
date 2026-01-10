@@ -320,7 +320,7 @@ function Enemy:draw()
         self:debug()
     end
 
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 function Enemy:canSee(player)
@@ -430,7 +430,7 @@ function Enemy:debug()
     love.graphics.circle("line", cx, cy, self.visionRange)
 
     -- Hitbox Bump (en blanc)
-    love.graphics.setColor(1, 1, 1, 1)
+    StyleUtils.resetColor()
     love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
 end
 

@@ -149,7 +149,7 @@ function Level:drawGlassDetails()
         love.graphics.setLineWidth(2)
     end
 
-    love.graphics.setColor(1, 1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 function Level:generate()

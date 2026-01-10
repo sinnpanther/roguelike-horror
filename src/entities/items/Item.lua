@@ -12,7 +12,7 @@ function Item:draw()
     -- Draw a small yellow square for the item
     love.graphics.setColor(1, 1, 0)
     love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 return Item

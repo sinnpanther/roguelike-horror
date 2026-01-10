@@ -13,7 +13,7 @@ function Victory:draw()
     local w, h = love.graphics.getWidth(), love.graphics.getHeight()
 
     love.graphics.clear(0, 0, 0)
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 
     local title = "TU AS SURVECU AUX PROFONDEURS"
     local info  = "Tu as atteint l'etage 10."

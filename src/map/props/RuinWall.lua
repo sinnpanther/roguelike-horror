@@ -31,7 +31,7 @@ function RuinWall:draw()
             self.w,
             self.h
     )
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 return RuinWall

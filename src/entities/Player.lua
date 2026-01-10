@@ -159,7 +159,7 @@ function Player:draw()
         self:debug()
     end
 
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 ---------------------
@@ -346,7 +346,7 @@ function Player:debug()
     love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
     love.graphics.circle("line", cx, cy, self.visionRange)
 
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 return Player

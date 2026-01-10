@@ -3,6 +3,7 @@ Class = require "libs.classic"
 Bump  = require "libs.bump"
 GameState = require "libs.hump.gamestate"
 SoundManager = require "src.audio.SoundManager"
+StyleUtils = require "src.utils.style_utils"
 
 -- State files
 States = {

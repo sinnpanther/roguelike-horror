@@ -25,7 +25,7 @@ function Inventory:draw()
 
     -- 3️⃣ UI inventaire
     love.graphics.setFont(self.titleFont)
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
     love.graphics.printf("Inventaire", 0, 80, love.graphics.getWidth(), "center")
     self:reset()
 end
@@ -43,11 +43,10 @@ end
 
 function Inventory:reset()
     -- Reset de la police
-    local normalFont = love.graphics.newFont(14)
-    love.graphics.setFont(normalFont)
+    StyleUtils.resetFont()
 
     -- Reset des couleurs de fond
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 return Inventory

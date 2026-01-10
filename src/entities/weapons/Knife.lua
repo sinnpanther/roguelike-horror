@@ -74,7 +74,7 @@ function Knife:draw()
     local px, py = self.player:getCenter()
     local r = self.offset + self.w * 0.5
 
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
     love.graphics.arc(
         "line",
         px, py,

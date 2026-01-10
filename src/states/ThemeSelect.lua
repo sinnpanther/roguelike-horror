@@ -49,16 +49,15 @@ function ThemeSelect:draw()
         )
     end
 
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 function ThemeSelect:leave()
     -- Reset de la police
-    local normalFont = love.graphics.newFont(14)
-    love.graphics.setFont(normalFont)
+    StyleUtils.resetFont()
 
     -- Reset des couleurs de fond
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 return ThemeSelect

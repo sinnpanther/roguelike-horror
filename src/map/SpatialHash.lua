@@ -124,7 +124,7 @@ function SpatialHash:drawDebug()
         )
     end
 
-    love.graphics.setColor(1, 1, 1)
+    StyleUtils.resetColor()
 end
 
 return SpatialHash
