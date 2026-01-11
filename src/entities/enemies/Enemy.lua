@@ -16,7 +16,6 @@ function Enemy:new(world, level, seed, x, y)
     self.world = world
     self.level = level
     self.rng = love.math.newRandomGenerator(seed)
-    self.x, self.y = x, y
     self.pos = Vector(x, y)
     self.w, self.h = 32, 32
     self.hp = 3
@@ -66,7 +65,7 @@ function Enemy:new(world, level, seed, x, y)
     self.noiseMemory = 2.5
 
     -- Ajout au monde physique
-    self.world:add(self, self.x, self.y, self.w, self.h)
+    self.world:add(self, self.pos.x, self.pos.y, self.w, self.h)
 end
 
 -- Méthode à redéfinir par les enfants (l'IA)
@@ -204,8 +203,8 @@ function Enemy:searchBehavior(dt)
     end
 
     dir = dir:normalized()
-    local goalX = self.x + dir.x * self.speed * 0.6 * dt
-    local goalY = self.y + dir.y * self.speed * 0.6 * dt
+    local goalX = self.pos.x + dir.x * self.speed * 0.6 * dt
+    local goalY = self.pos.y + dir.y * self.speed * 0.6 * dt
 
     -- collision bump
     local actualX, actualY = self.world:move(self, goalX, goalY, function() return "slide" end)
@@ -213,7 +212,7 @@ function Enemy:searchBehavior(dt)
     self.level.spatialHash:update(self)
 
     -- regarde vers la target
-    self.angle = math.atan2(target.y - (self.y + self.h/2), target.x - (self.x + self.w/2))
+    self.angle = math.atan2(target.y - (self.pos.y + self.h/2), target.x - (self.pos.x + self.w/2))
 end
 
 function Enemy:tryAttack(player)
@@ -280,7 +279,7 @@ function Enemy:draw()
 
     -- Corps de l'ennemi
     love.graphics.setColor(self.color.red, self.color.green, self.color.blue, self.color.alpha)
-    love.graphics.rectangle("fill", self.x, self.y, self.w, self.h)
+    love.graphics.rectangle("fill", self.pos.x, self.pos.y, self.w, self.h)
 
     -- --- BARRE DE VIE AU-DESSUS ---
     if self.maxHp and self.maxHp > 0 then
@@ -288,8 +287,8 @@ function Enemy:draw()
         local barHeight = 4
         local margin    = 3  -- espace entre le haut du sprite et la barre
 
-        local x = self.x
-        local y = self.y - barHeight - margin
+        local x = self.pos.x
+        local y = self.pos.y - barHeight - margin
 
         -- Fond sombre
         love.graphics.setColor(0, 0, 0, 0.7)
@@ -349,11 +348,11 @@ function Enemy:canSee(player)
     local oy = math.min(4, ph * 0.25)
 
     local points = {
-        { player.x + pw * 0.5, player.y + ph * 0.5 }, -- centre
-        { player.x + ox,       player.y + oy },
-        { player.x + pw - ox,  player.y + oy },
-        { player.x + ox,       player.y + ph - oy },
-        { player.x + pw - ox,  player.y + ph - oy },
+        { player.pos.x + pw * 0.5, player.pos.y + ph * 0.5 }, -- centre
+        { player.pos.x + ox,       player.pos.y + oy },
+        { player.pos.x + pw - ox,  player.pos.y + oy },
+        { player.pos.x + ox,       player.pos.y + ph - oy },
+        { player.pos.x + pw - ox,  player.pos.y + ph - oy },
     }
 
     for _, p in ipairs(points) do
@@ -377,11 +376,7 @@ function Enemy:onNoiseHeard(x, y, strength)
 end
 
 function Enemy:getCenter()
-    return self.x + self.w / 2, self.y + self.h / 2
-end
-
-function Enemy:getVCenter()
-    return Vector(self.x + self.w / 2, self.y + self.h / 2)
+    return self.pos.x + self.w / 2, self.pos.y + self.h / 2
 end
 
 function Enemy:destroyEnemy(enemy, room, index)
@@ -397,8 +392,8 @@ function Enemy:debug()
         return
     end
 
-    local cx = self.x + self.w / 2
-    local cy = self.y + self.h / 2
+    local cx = self.pos.x + self.w / 2
+    local cy = self.pos.y + self.h / 2
 
     --------------------------------------------------
     -- Champ de vision (FOV)
@@ -453,8 +448,8 @@ function Enemy:debug()
                         tostring(self.state),
                         tostring(self.canSeePlayer)
                 ),
-                self.x,
-                self.y - 55
+                self.pos.x,
+                self.pos.y - 55
         )
     end
 
@@ -463,7 +458,7 @@ function Enemy:debug()
     --------------------------------------------------
     if DebugFlags.enemy.hitbox then
         StyleUtils.resetColor()
-        love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
+        love.graphics.rectangle("line", self.pos.x, self.pos.y, self.w, self.h)
     end
 
     StyleUtils.resetColor()

@@ -25,10 +25,10 @@ end
 
 -- Ajoute une entité (doit avoir x, y, w, h)
 function SpatialHash:add(entity)
-    local minX, minY = self:_getCellCoords(entity.x, entity.y)
+    local minX, minY = self:_getCellCoords(entity.pos.x, entity.pos.y)
     local maxX, maxY = self:_getCellCoords(
-            entity.x + entity.w,
-            entity.y + entity.h
+            entity.pos.x + entity.w,
+            entity.pos.y + entity.h
     )
 
     entity._spatialCells = {}

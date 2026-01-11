@@ -1,3 +1,4 @@
+local Vector = require "libs.hump.vector"
 local VisionUtils = require "src.utils.vision_utils"
 
 local Flashlight = Class:extend()
@@ -9,8 +10,7 @@ function Flashlight:new(player)
     self.player = player
 
     -- Position monde
-    self.x = 0
-    self.y = 0
+    self.pos = Vector(0, 0)
 
     -- Angles
     self.angle = 0          -- angle réel (rendu)
@@ -46,8 +46,7 @@ end
 function Flashlight:update(dt, cam)
     -- Position = centre du joueur
     local px, py = self.player:getCenter()
-    self.x = px
-    self.y = py
+    self.pos = Vector(px, py)
 
     -- Angle stable
     local mx, my = love.mouse.getPosition()
@@ -69,7 +68,7 @@ end
 -- GETTERS
 --------------------------------------------------
 function Flashlight:getPosition()
-    return self.x, self.y
+    return self.pos.x, self.pos.y
 end
 
 function Flashlight:getAngle()
@@ -94,7 +93,7 @@ end
 -- radiusOffset: optionnel (pour debug/halo, mais tu peux laisser 0)
 --------------------------------------------------
 function Flashlight:drawIrregularCone(level, radiusOffset, alpha)
-    local x, y = self.x, self.y
+    local x, y = self.pos.x, self.pos.y
     local a = self.angle
     local maxR = self.range + (radiusOffset or 0)
     local cone = self.coneAngle

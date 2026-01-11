@@ -18,11 +18,9 @@ function Player:new(world, level, x, y, room)
     self.level = level
 
     -- Position
-    self.x, self.y = x, y
     self.pos = Vector(x, y)
 
-    self._prevX = x
-    self._prevY = y
+    self._prevPos = self.pos:clone()
 
     self.w, self.h = 32, 32
     self.type = "player"
@@ -103,23 +101,21 @@ function Player:update(dt, cam)
     local goal = self.pos + velocity
 
     -- Sauvegarde ancienne position
-    local oldX, oldY = self._prevX, self._prevY
+    local oldPos = self._prevPos
 
     local ax, ay = self.world:move(self, goal.x, goal.y, WorldUtils.playerFilter)
     MathUtils.updateCoordinates(self, ax, ay)
     self.level.spatialHash:update(self)
 
     -- Déplacement réel ?
-    local dx = self.x - oldX
-    local dy = self.y - oldY
-    local moved = (dx * dx + dy * dy) > 0.5
+    local movedVector = self.pos - oldPos
+    local moved = movedVector:len2() > 0.5
 
     -- 👣 Sons de pas (ICI)
     self:_handleStep(dt, hasInput and moved)
 
     -- Mémoriser position
-    self._prevX = self.x
-    self._prevY = self.y
+    self._prevPos = Vector(self.pos.x, self.pos.y)
 
     -- Orientation souris
     local mx, my = love.mouse.getPosition()
@@ -172,8 +168,8 @@ function Player:canSee(entity)
     if entity.getCenter then
         ex, ey = entity:getCenter()
     else
-        ex = entity.x
-        ey = entity.y
+        ex = entity.pos.x
+        ey = entity.pos.y
     end
 
     -- 2. Vecteur joueur → entité
@@ -216,10 +212,10 @@ function Player:canSee(entity)
 
         points = {
             { ex, ey },
-            { entity.x + ox,     entity.y + oy },
-            { entity.x + w-ox,   entity.y + oy },
-            { entity.x + ox,     entity.y + h-oy },
-            { entity.x + w-ox,   entity.y + h-oy },
+            { entity.pos.x + ox,     entity.pos.y + oy },
+            { entity.pos.x + w-ox,   entity.pos.y + oy },
+            { entity.pos.x + ox,     entity.pos.y + h-oy },
+            { entity.pos.x + w-ox,   entity.pos.y + h-oy },
         }
     else
         -- target ponctuelle (puzzle, bouton, etc)
@@ -302,11 +298,7 @@ function Player:_handleGlassNoise(dt, cx, cy)
 end
 
 function Player:getCenter()
-    return self.x + self.w / 2, self.y + self.h / 2
-end
-
-function Player:getVCenter()
-    return Vector(self.x + self.w / 2, self.y + self.h / 2)
+    return self.pos.x + self.w / 2, self.pos.y + self.h / 2
 end
 
 function Player:debug()
@@ -363,8 +355,8 @@ function Player:debug()
                         "canSee: %s",
                         tostring(self.canSeeEnemy)
                 ),
-                self.x,
-                self.y - 40
+                self.pos.x,
+                self.pos.y - 40
         )
     end
 

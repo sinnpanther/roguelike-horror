@@ -66,12 +66,12 @@ function Play:_startLevel()
     if not self.player then
         self.player = Player(self.world, self.level, spawnX, spawnY)
         self.hud = HUD(self.player)
-        self.cam = Camera(self.player.x, self.player.y)
+        self.cam = Camera(self.player.pos.x, self.player.pos.y)
         self.cam:zoomTo(1.2)
     else
         self.player.level = self.level
         MathUtils.updateCoordinates(self.player, spawnX, spawnY)
-        self.world:update(self.player, self.player.x, self.player.y)
+        self.world:update(self.player, self.player.pos.x, self.player.pos.y)
     end
 
     self.level.spatialHash:add(self.player)

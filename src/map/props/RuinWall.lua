@@ -2,7 +2,7 @@ local Prop = require "src.map.props.Prop"
 
 local RuinWall = Prop:extend()
 
-function RuinWall:new(world, tileX, tileY, opts)
+function RuinWall:new(world, tx, ty, opts)
     opts = opts or {}
 
     opts.blocksMovement = true
@@ -12,8 +12,8 @@ function RuinWall:new(world, tileX, tileY, opts)
     RuinWall.super.new(
             self,
             world,
-            tileX,
-            tileY,
+            tx,
+            ty,
             1, -- largeur en tiles
             1, -- hauteur en tiles
             opts
@@ -26,8 +26,8 @@ function RuinWall:draw()
     love.graphics.setColor(0.45, 0.35, 0.35)
     love.graphics.rectangle(
             "fill",
-            self.x,
-            self.y,
+            self.pos.x,
+            self.pos.y,
             self.w,
             self.h
     )

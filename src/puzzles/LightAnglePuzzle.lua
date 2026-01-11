@@ -61,7 +61,7 @@ function LightAnglePuzzle:draw()
         end
 
 
-        love.graphics.circle("line", t.x, t.y, 18)
+        love.graphics.circle("line", t.pos.x, t.pos.y, 18)
     end
     love.graphics.setColor(1,1,1)
 end

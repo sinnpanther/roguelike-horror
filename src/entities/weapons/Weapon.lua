@@ -1,3 +1,5 @@
+local Vector = require "libs.hump.vector"
+
 local Weapon = Class:extend()
 
 function Weapon:new(world, player)
@@ -7,7 +9,7 @@ function Weapon:new(world, player)
     self.entityType = "weapon"
 
     -- Hitbox logique (PAS un item Bump)
-    self.x, self.y = player.x, player.y
+    self.pos = player.pos
     self.w, self.h = 16, 16
 
     -- Etat d'activation (coup en cours)
@@ -72,8 +74,8 @@ end
 function Weapon:updatePosition()
     -- Par défaut : attaché au centre du player
     local px, py = self.player:getCenter()
-    self.x = px - self.w / 2
-    self.y = py - self.h / 2
+    self.pos.x = px - self.w / 2
+    self.pos.y = py - self.h / 2
 end
 
 function Weapon:applyDamage()

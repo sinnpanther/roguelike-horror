@@ -1,9 +1,10 @@
 -- Target lambda (utile pour plusieurs choses, à hériter pour créer des targets spécifiques)
+local Vector = require "libs.hump.vector"
+
 local Target = Class:extend()
 
 function Target:new(x, y, w, h, opts)
-    self.x = x
-    self.y = y
+    self.pos = Vector(x, y)
     self.w = w
     self.h = h
 
@@ -11,7 +12,7 @@ function Target:new(x, y, w, h, opts)
 end
 
 function Target:getCenter()
-    return self.x + self.w / 2, self.y + self.h / 2
+    return self.pos.x + self.w / 2, self.pos.y + self.h / 2
 end
 
 function Target:_initOptions(opts)

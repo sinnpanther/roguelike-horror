@@ -73,22 +73,26 @@ function Chaser:idleBehavior(dt)
         return
     end
 
-    -- DÉPLACEMENT NORMAL
-    local dx = dxBase * self.idleSpeed * dt
-    local dy = dyBase * self.idleSpeed * dt
+    -- Direction de base sous forme de vecteur
+    local dir = Vector(dxBase, dyBase)
+
+    -- Déplacement voulu
+    local movement = dir * self.idleSpeed * dt
     self.angle = baseAngle
 
-    local goalX = self.x + dx
-    local goalY = self.y + dy
+    -- Position cible
+    local goal = self.pos + movement
 
+    -- Déplacement avec collisions
     local actualX, actualY, cols, len =
-    self.world:move(self, goalX, goalY, WorldUtils.enemyFilter)
+    self.world:move(self, goal.x, goal.y, WorldUtils.enemyFilter)
 
-    -- Distance réellement parcourue
-    local movedDx = actualX - self.x
-    local movedDy = actualY - self.y
-    local movedDist = math.sqrt(movedDx * movedDx + movedDy * movedDy)
+    -- Vecteur réellement parcouru
+    local actualPos = Vector(actualX, actualY)
+    local movedVector = actualPos - self.pos
+    local movedDist = movedVector:len()
 
+    -- Mise à jour position
     MathUtils.updateCoordinates(self, actualX, actualY)
     self.level.spatialHash:update(self)
 

@@ -1,3 +1,5 @@
+local Vector = require "libs.hump.vector"
+
 local Weapon = require "src.entities.weapons.Weapon"
 
 local Knife = Weapon:extend()
@@ -34,8 +36,7 @@ function Knife:updatePosition()
     local cx = px + dx * self.offset
     local cy = py + dy * self.offset
 
-    self.x = cx - self.w * 0.5
-    self.y = cy - self.h * 0.5
+    self.pos = Vector(cx - self.w / 2, cy - self.h / 2)
 end
 
 function Knife:applyDamage()
@@ -47,7 +48,7 @@ function Knife:applyDamage()
         return item.entityType == "enemy"
     end
 
-    local items, len = self.world:queryRect(self.x, self.y, self.w, self.h, filter)
+    local items, len = self.world:queryRect(self.pos.x, self.pos.y, self.w, self.h, filter)
     if len == 0 then
         return
     end
