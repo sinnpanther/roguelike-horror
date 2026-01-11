@@ -10,7 +10,8 @@ States = {
     Menu = require "src.states.Menu",
     Play = require "src.states.Play",
     Victory = require "src.states.Victory",
-    Inventory = require "src.states.Inventory"
+    Inventory = require "src.states.Inventory",
+    Debug = require "src.states.Debug",
 }
 
 function love.load()
@@ -39,9 +40,9 @@ end
 -- DEBUG
 function love.keypressed(key)
     -- Mode debug
-    if key == "f1" then
-        DEBUG_MODE = not DEBUG_MODE
-    end
+    --if key == "f1" then
+    --    DEBUG_MODE = not DEBUG_MODE
+    --end
 
     -- Lampe torche ON/OFF
     if key == "f2" then

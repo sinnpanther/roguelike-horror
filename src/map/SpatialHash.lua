@@ -1,4 +1,4 @@
-local Class = require "libs.classic"
+local DebugFlags = require "src.debug.DebugFlags"
 
 local SpatialHash = Class:extend()
 
@@ -104,11 +104,14 @@ function SpatialHash:queryRect(x, y, w, h, filter)
     return results
 end
 
--- --------------------------------------------------
--- Debug (optionnel)
--- --------------------------------------------------
+-----------------------------------------------------
+-- Debug
+-----------------------------------------------------
+function SpatialHash:debug()
+    if not DebugFlags.enabled and not DebugFlags.spatialHash.enabled then
+        return
+    end
 
-function SpatialHash:drawDebug()
     love.graphics.setColor(0, 1, 0, 1)
 
     for key, _ in pairs(self.cells) do

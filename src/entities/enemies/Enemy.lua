@@ -1,5 +1,7 @@
 -- Dependancies
 local Vector = require "libs.hump.vector"
+local DebugFlags = require "src.debug.DebugFlags"
+
 -- Utils
 local MathUtils = require "src.utils.math_utils"
 local WorldUtils = require "src.utils.world_utils"
@@ -272,7 +274,7 @@ function Enemy:onHit(damage, fromAngle)
 end
 
 function Enemy:draw()
-    if not self.isVisible and not DEBUG_MODE then
+    if not self.isVisible and not DebugFlags.enabled and not DebugFlags.enemy.enabled then
         return
     end
 
@@ -316,9 +318,7 @@ function Enemy:draw()
         )
     end
 
-    if DEBUG_MODE then
-        self:debug()
-    end
+    self:debug()
 
     StyleUtils.resetColor()
 end
@@ -392,46 +392,82 @@ end
 
 -- AFFICHAGE DEBUG
 function Enemy:debug()
+    -- Garde-fous globaux
+    if not DebugFlags.enabled or not DebugFlags.enemy.enabled then
+        return
+    end
+
     local cx = self.x + self.w / 2
     local cy = self.y + self.h / 2
 
-    love.graphics.setColor(1, 1, 0, 0.15)
+    --------------------------------------------------
+    -- Champ de vision (FOV)
+    --------------------------------------------------
+    if DebugFlags.enemy.fov then
+        love.graphics.setColor(1, 1, 0, 0.15)
+        love.graphics.arc(
+                "fill",
+                cx,
+                cy,
+                self.visionRange,
+                self.angle - self.fov / 2,
+                self.angle + self.fov / 2,
+                32
+        )
+    end
 
-    love.graphics.arc(
-            "fill",
-            cx, cy,
-            self.visionRange,
-            self.angle - self.fov / 2,
-            self.angle + self.fov / 2,
-            32
-    )
+    --------------------------------------------------
+    -- Direction (ligne centrale)
+    --------------------------------------------------
+    if DebugFlags.enemy.direction then
+        if self.canSeePlayer then
+            love.graphics.setColor(0, 1, 0, 1)
+        else
+            love.graphics.setColor(1, 0, 0, 1)
+        end
 
-    -- Direction
-    love.graphics.setColor(self.canSeePlayer and 0 or 1, self.canSeePlayer and 1 or 0, 0)
-    love.graphics.line(
-            cx, cy,
-            cx + math.cos(self.angle) * self.visionRange,
-            cy + math.sin(self.angle) * self.visionRange
-    )
+        love.graphics.line(
+                cx,
+                cy,
+                cx + math.cos(self.angle) * self.visionRange,
+                cy + math.sin(self.angle) * self.visionRange
+        )
+    end
 
-    -- Infos
-    love.graphics.print(
-            string.format(
-                    "state: %s\ncanSee: %s",
-                    self.state,
-                    tostring(self.canSeePlayer)
-            ),
-            self.x,
-            self.y - 55
-    )
+    --------------------------------------------------
+    -- Cercle de portée
+    --------------------------------------------------
+    if DebugFlags.enemy.range then
+        love.graphics.setColor(0.8, 0, 0, 0.8)
+        love.graphics.circle("line", cx, cy, self.visionRange)
+    end
 
-    -- Point central
-    love.graphics.setColor(0.8, 0, 0, 0.8)
-    love.graphics.circle("line", cx, cy, self.visionRange)
+    --------------------------------------------------
+    -- Infos texte (état / perception)
+    --------------------------------------------------
+    if DebugFlags.enemy.state then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print(
+                string.format(
+                        "state: %s\ncanSee: %s",
+                        tostring(self.state),
+                        tostring(self.canSeePlayer)
+                ),
+                self.x,
+                self.y - 55
+        )
+    end
 
-    -- Hitbox Bump (en blanc)
+    --------------------------------------------------
+    -- Hitbox (Bump)
+    --------------------------------------------------
+    if DebugFlags.enemy.hitbox then
+        StyleUtils.resetColor()
+        love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
+    end
+
     StyleUtils.resetColor()
-    love.graphics.rectangle("line", self.x, self.y, self.w, self.h)
 end
+
 
 return Enemy

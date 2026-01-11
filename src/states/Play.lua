@@ -1,6 +1,6 @@
 -- Requirements
 local Camera = require "libs.hump.camera"
-local Vector = require "libs.hump.vector"
+local DebugFlags = require "src.debug.DebugFlags"
 
 local Player = require "src.entities.Player"
 local HUD = require "src.ui.HUD"
@@ -155,10 +155,8 @@ function Play:draw()
     self.level:draw(self.player)
     self.player:draw()
 
-    if DEBUG_MODE then
-        self:debug()
-        self.level.spatialHash:drawDebug()
-    end
+    self:debug()
+    self.level.spatialHash:debug()
     detachCamSnapped(self)
 
     if FLASHLIGHT_DISABLED then
@@ -257,6 +255,10 @@ end
 
 
 function Play:keypressed(key)
+    if key == "f1" then
+        GameState.push(States.Debug)
+    end
+
     if key == "r" then
         self:resetRun()
         GameState.switch(self)
@@ -288,13 +290,19 @@ function Play:mousepressed(x, y, button)
 end
 
 function Play:debug()
-    love.graphics.setColor(0, 1, 1, 0.5)
+    if DebugFlags.enabled or DebugFlags.play.enabled then
+        return
+    end
 
-    local items, len = self.world:getItems()
-    for i = 1, len do
-        local x, y, w, h = self.world:getRect(items[i])
-        love.graphics.rectangle("line", x, y, w, h)
-        love.graphics.print(items[i].type or "unknown", x, y - 15)
+    if DebugFlags.play.world then
+        love.graphics.setColor(0, 1, 1, 0.5)
+
+        local items, len = self.world:getItems()
+        for i = 1, len do
+            local x, y, w, h = self.world:getRect(items[i])
+            love.graphics.rectangle("line", x, y, w, h)
+            love.graphics.print(items[i].type or "unknown", x, y - 15)
+        end
     end
 end
 

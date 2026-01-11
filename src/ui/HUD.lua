@@ -1,3 +1,5 @@
+local DebugFlags = require "src.debug.DebugFlags"
+
 local HUD = Class:extend()
 
 function HUD:new(player)
@@ -32,12 +34,14 @@ function HUD:draw(level, displaySeed)
 
     StyleUtils.resetColor()
 
-    if DEBUG_MODE then
-        self:debug()
-    end
+    self:debug()
 end
 
 function HUD:debug()
+    if DebugFlags.enabled or DebugFlags.hud.enabled then
+        return
+    end
+
     love.graphics.printf("DEBUG MODE - FPS: " .. love.timer.getFPS(), 10, 10, love.graphics.getWidth() - 20, "right")
 end
 

@@ -1,5 +1,6 @@
 -- Dependancies
 local Vector = require "libs.hump.vector"
+local DebugFlags = require "src.debug.DebugFlags"
 
 -- Utils
 local WorldUtils = require "src.utils.world_utils"
@@ -155,9 +156,7 @@ function Player:draw()
 
     self.weapon:draw()
 
-    if DEBUG_MODE then
-        self:debug()
-    end
+    self:debug()
 
     StyleUtils.resetColor()
 end
@@ -311,40 +310,63 @@ function Player:getVCenter()
 end
 
 function Player:debug()
+    if not DebugFlags.enabled or not DebugFlags.player.enabled then
+        return
+    end
+
     local cx, cy = self:getCenter()
 
-    -- Lampe torche
-    love.graphics.setColor(0, 0, 1, 0.10)
-    love.graphics.arc(
-            "fill",
-            cx,
-            cy,
-            self.visionRange,
-            self.angle - self.flashlight.coneAngle,
-            self.angle + self.flashlight.coneAngle,
-            32
-    )
-    love.graphics.setColor(0, 0, 1)
+    --------------------------------------------------
+    -- FOV / Lampe torche
+    --------------------------------------------------
+    if DebugFlags.player.fov then
+        love.graphics.setColor(0, 0, 1, 0.10)
+        love.graphics.arc(
+                "fill",
+                cx,
+                cy,
+                self.visionRange,
+                self.angle - self.flashlight.coneAngle,
+                self.angle + self.flashlight.coneAngle,
+                32
+        )
+        love.graphics.setColor(0, 0, 1)
+    end
 
-    -- Infos
-    love.graphics.print(
-            string.format(
-                    "canSee: %s",
-                    tostring(self.canSeeEnemy)
-            ),
-            self.x,
-            self.y - 40
-    )
+    --------------------------------------------------
+    -- Direction centrale
+    --------------------------------------------------
+    if DebugFlags.player.direction then
+        love.graphics.setColor(0, 1, 0, 1)
 
-    -- Direction centrale (ligne)
-    love.graphics.setColor(0, 1, 0, 1)
-    local dx = math.cos(self.angle) * self.visionRange
-    local dy = math.sin(self.angle) * self.visionRange
-    love.graphics.line(cx, cy, cx + dx, cy + dy)
+        local dx = math.cos(self.angle) * self.visionRange
+        local dy = math.sin(self.angle) * self.visionRange
 
-    -- Point central
-    love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
-    love.graphics.circle("line", cx, cy, self.visionRange)
+        love.graphics.line(cx, cy, cx + dx, cy + dy)
+    end
+
+    --------------------------------------------------
+    -- Cercle de portée
+    --------------------------------------------------
+    if DebugFlags.player.range then
+        love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
+        love.graphics.circle("line", cx, cy, self.visionRange)
+    end
+
+    --------------------------------------------------
+    -- Infos texte (état)
+    --------------------------------------------------
+    if DebugFlags.player.state then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.print(
+                string.format(
+                        "canSee: %s",
+                        tostring(self.canSeeEnemy)
+                ),
+                self.x,
+                self.y - 40
+        )
+    end
 
     StyleUtils.resetColor()
 end
