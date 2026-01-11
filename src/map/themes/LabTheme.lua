@@ -22,11 +22,8 @@ function LabTheme:getProfile()
         hasInternalWalls = true,
         internalWallChance = 0.6,
 
-        hasPillars = true,
-        pillarChance = 0.5,
-
-        hasProps = false,
-        propChance = 0,
+        hasProps = true,
+        propChance = 1,
 
         hasEnemies = true,
         enemyChance = 0.8,

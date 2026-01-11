@@ -20,7 +20,7 @@ end
 function LabLayout:build()
     self:_createRooms()
     self:_createCorridors()
-    if self.profile.hasPillars then
+    if self.profile.hasProps then
         self:_placeProps()
     end
 end
@@ -109,11 +109,11 @@ end
 function LabLayout:generatePillars(room)
     local profile = self.profile
 
-    if not profile.hasPillars then
+    if not profile.hasProps then
         return
     end
 
-    if self.rng:random() > profile.pillarChance then
+    if self.rng:random() > profile.propChance then
         return
     end
 

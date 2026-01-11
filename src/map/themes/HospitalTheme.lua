@@ -26,9 +26,6 @@ function HospitalTheme:getProfile()
         hasInternalWalls = false,
         internalWallChance = 0,
 
-        hasPillars = false,
-        pillarChance = 0,
-
         hasProps = false,
         propChance = 0,
 

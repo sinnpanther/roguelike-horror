@@ -6,8 +6,9 @@ function Pillar:new(world, tx, ty, opts)
     opts.blocksMovement = true
     opts.blocksVision   = true
     opts.type  = "pillar"
+    opts.spriteH = TILE_SIZE * 2
 
-    Pillar.super.new(self, world, tx, ty, 1, 1, opts)
+    Pillar.super.new(self, world, tx, ty, opts)
 
     --self.sprite = love.graphics.newImage(
     --        "assets/graphics/props/" .. theme .. "/pillar.png"
@@ -16,7 +17,23 @@ function Pillar:new(world, tx, ty, opts)
 end
 
 function Pillar:draw()
-    --love.graphics.rectangle("line", self.pos.x, self.pos.y, self.w, self.h)
+    local x = self.pos.x
+    local y = self.pos.y
+
+    -- Ancrage au sol :
+    -- le bas du rectangle visuel est aligné avec le bas de la collision
+    local drawY = y + self.h - self.spriteH
+
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.rectangle(
+            "fill",
+            x,
+            drawY,
+            self.w,
+            self.spriteH
+    )
+
+    StyleUtils.resetColor()
 end
 
 return Pillar

@@ -25,9 +25,6 @@ function GraveyardTheme:getProfile()
         hasInternalWalls = false,
         internalWallChance = 0,
 
-        hasPillars = false,
-        pillarChance = 0,
-
         hasProps = true,
         propChance = 0.4,
 

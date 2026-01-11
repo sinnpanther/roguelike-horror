@@ -22,14 +22,16 @@ function Player:new(world, level, x, y, room)
 
     self._prevPos = self.pos:clone()
 
-    self.w, self.h = 32, 32
+    -- Sprites
+    self.sprite = love.graphics.newImage("assets/graphics/sprites/player/player_32_64.png")
+
+    self.w, self.h = TILE_SIZE, TILE_SIZE
+    self.spriteW = TILE_SIZE
+    self.spriteH = self.sprite:getHeight()
     self.type = "player"
     self.entityType = "player"
     self.controlsEnabled = true
     self.room = room
-
-    -- Sprites
-    self.sprite = love.graphics.newImage("assets/graphics/sprites/player/player.png")
 
     -- Vie du joueur
     self.maxHp = 5
@@ -144,11 +146,8 @@ function Player:update(dt, cam)
 end
 
 function Player:draw()
-    love.graphics.draw(
-            self.sprite,
-            self.pos.x,
-            self.pos.y
-    )
+    local drawY = self.pos.y + self.h - self.spriteH
+    love.graphics.draw(self.sprite, self.pos.x, drawY)
 
     self.weapon:draw()
 
@@ -358,6 +357,15 @@ function Player:debug()
                 self.pos.x,
                 self.pos.y - 40
         )
+    end
+
+    --------------------------------------------------
+    -- Hitbox (Bump)
+    --------------------------------------------------
+    if DebugFlags.player.hitbox then
+        StyleUtils.resetColor()
+        local drawY = self.pos.y - self.spriteH + TILE_SIZE
+        love.graphics.rectangle("line", self.pos.x, drawY, self.w, self.spriteH)
     end
 
     StyleUtils.resetColor()

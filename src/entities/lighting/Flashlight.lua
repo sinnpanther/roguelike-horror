@@ -226,7 +226,7 @@ function Flashlight:_raycastToWallDDA(level, ox, oy, angle, maxDist)
 
         -- Si c'est un mur -> on s'arrête AVANT d'entrer dans la tuile mur
         if VisionUtils.isWall(level, mapX, mapY) then
-            local hit = math.min(maxDist, tEnter - eps)
+            local hit = math.min(maxDist, tEnter + 0.5)
             return math.max(0, hit)
         end
 

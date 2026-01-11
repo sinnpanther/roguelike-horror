@@ -27,7 +27,9 @@ function Level:new(world, seed, levelIndex)
     self.map = {}
     self.rooms = {}
     self.walls = {}
+    self.wallVisualHeight = TILE_SIZE
 
+    self.player = nil
     self.theme = nil
     self.puzzleManager = nil
     self.exitUnlocked = false
@@ -46,6 +48,50 @@ function Level:new(world, seed, levelIndex)
     self.floorBatch = nil
     self.wallBatch  = nil
 end
+function Level:drawWallSecondaryShadows(lightX, lightY)
+    local ts = self.ts
+    local h  = self.wallVisualHeight
+
+    love.graphics.setColor(0, 0, 0, 0.65)
+
+    for y = 1, self.mapH do
+        for x = 1, self.mapW do
+            if self.map[y][x] == TILE_WALL then
+                local baseX = (x - 1) * ts
+                local baseY = (y - 1) * ts
+
+                -- centre du mur au sol
+                local cx = baseX + ts * 0.5
+                local cy = baseY + ts * 0.5
+
+                -- direction lumière → mur
+                local dx = cx - lightX
+                local dy = cy - lightY
+
+                local len = math.sqrt(dx * dx + dy * dy)
+                if len > 0 then
+                    dx = dx / len
+                    dy = dy / len
+
+                    -- projection de l’ombre vers l’arrière
+                    local shadowLength = h * 0.75
+
+                    love.graphics.polygon(
+                            "fill",
+                            baseX, baseY - h,
+                            baseX + ts, baseY - h,
+                            baseX + ts + dx * shadowLength, baseY - h + dy * shadowLength,
+                            baseX + dx * shadowLength,      baseY - h + dy * shadowLength
+                    )
+                end
+            end
+        end
+    end
+
+    StyleUtils.resetColor()
+end
+
+
 
 function Level:buildTileBatches()
     local maxTiles = self.mapW * self.mapH
@@ -212,21 +258,45 @@ function Level:draw()
     -- Contours verre (par-dessus le sol, avant les murs)
     self:drawGlassDetails()
 
-    -- Murs
+    -- Base des murs (au sol)
     if self.wallBatch then
         love.graphics.draw(self.wallBatch, 0, 0)
     end
 
+    --------------------------------------------------
+    -- SORTING DES ENTITÉS "DEBOUT"
+    --------------------------------------------------
+    local drawables = {}
+
+    -- Player
+    if self.player then
+        drawables[#drawables + 1] = self.player
+    end
+
+    -- Ennemis
     for _, room in ipairs(self.rooms) do
         for _, enemy in ipairs(room.enemies) do
-            enemy:draw()
+            if not enemy.isDead then
+                drawables[#drawables + 1] = enemy
+            end
         end
     end
 
+    -- Props
     if self.profile.hasProps then
         for _, prop in ipairs(self.props) do
-            prop:draw()
+            drawables[#drawables + 1] = prop
         end
+    end
+
+    -- Tri par le bas de la collision (pieds)
+    table.sort(drawables, function(a, b)
+        return (a.pos.y + a.h) < (b.pos.y + b.h)
+    end)
+
+    -- Dessin trié
+    for _, e in ipairs(drawables) do
+        e:draw()
     end
 
     if self.profile.hasPuzzle then

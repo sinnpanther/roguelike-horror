@@ -2,14 +2,14 @@ local Vector = require "libs.hump.vector"
 
 local Prop = Class:extend()
 
-function Prop:new(world, tileX, tileY, tileW, tileH, opts)
+function Prop:new(world, tx, ty, opts, tw, th)
     opts = opts or {}
 
     -- Coordonnées en tiles
-    self.tx = tileX
-    self.ty = tileY
-    self.tw = tileW or 1
-    self.th = tileH or 1
+    self.tx = tx
+    self.ty = ty
+    self.tw = tw or 1
+    self.th = th or 1
 
     -- Conversion monde (pixels)
     local px = (self.tx - 1) * TILE_SIZE
@@ -17,6 +17,9 @@ function Prop:new(world, tileX, tileY, tileW, tileH, opts)
     self.pos = Vector(px, py)
     self.w = self.tw * TILE_SIZE
     self.h = self.th * TILE_SIZE
+
+    self.spriteW = self.w
+    self.spriteH = opts.spriteH or self.h * 2
 
     self.world = world
 

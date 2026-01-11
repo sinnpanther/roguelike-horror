@@ -65,6 +65,7 @@ function Play:_startLevel()
     local spawnX, spawnY = self.mainRoom:getRandomSpawn(self.player)
     if not self.player then
         self.player = Player(self.world, self.level, spawnX, spawnY)
+        self.level.player = self.player
         self.hud = HUD(self.player)
         self.cam = Camera(self.player.pos.x, self.player.pos.y)
         self.cam:zoomTo(1.2)
@@ -153,7 +154,6 @@ function Play:draw()
     --------------------------------------------------
     attachCamSnapped(self)
     self.level:draw(self.player)
-    self.player:draw()
 
     self:debug()
     self.level.spatialHash:debug()
@@ -199,7 +199,7 @@ function Play:draw()
         local circle = self.player.flashlight:getCircle()
         love.graphics.circle("fill", fx + 0.5, fy + 0.5, circle, 64)
 
-        self.cam:detach()
+        detachCamSnapped(self)
     end, "replace", 1)
 
     --------------------------------------------------
@@ -209,12 +209,18 @@ function Play:draw()
 
     attachCamSnapped(self)
     self.level:draw(self.player)
-    self.player:draw()
     detachCamSnapped(self)
 
     love.graphics.setStencilTest()
 
     love.graphics.setCanvas()
+
+    attachCamSnapped(self)
+
+    local lx, ly = self.player.flashlight:getPosition()
+    self.level:drawWallSecondaryShadows(lx, ly)
+
+    detachCamSnapped(self)
 
     --------------------------------------------------
     -- 6. POST-PROCESS : VHS

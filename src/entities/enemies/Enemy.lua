@@ -17,7 +17,11 @@ function Enemy:new(world, level, seed, x, y)
     self.level = level
     self.rng = love.math.newRandomGenerator(seed)
     self.pos = Vector(x, y)
-    self.w, self.h = 32, 32
+    self.w, self.h = TILE_SIZE, TILE_SIZE
+    -- Visuel
+    self.spriteW = TILE_SIZE
+    self.spriteH = TILE_SIZE * 2
+
     self.hp = 3
     self.maxHp = self.hp
     self.speed = 100
@@ -43,9 +47,6 @@ function Enemy:new(world, level, seed, x, y)
 
     -- Feedback visuel
     self.attackFlashTime = 0
-
-    self.vx = 0
-    self.vy = 0
 
     -- State machine
     self.state = "idle"
@@ -278,8 +279,9 @@ function Enemy:draw()
     end
 
     -- Corps de l'ennemi
+    local drawY = self.pos.y - (self.spriteH - self.h)
     love.graphics.setColor(self.color.red, self.color.green, self.color.blue, self.color.alpha)
-    love.graphics.rectangle("fill", self.pos.x, self.pos.y, self.w, self.h)
+    love.graphics.rectangle("fill", self.pos.x, drawY, self.w, self.spriteH)
 
     -- --- BARRE DE VIE AU-DESSUS ---
     if self.maxHp and self.maxHp > 0 then
@@ -288,7 +290,7 @@ function Enemy:draw()
         local margin    = 3  -- espace entre le haut du sprite et la barre
 
         local x = self.pos.x
-        local y = self.pos.y - barHeight - margin
+        local y = drawY - barHeight - margin
 
         -- Fond sombre
         love.graphics.setColor(0, 0, 0, 0.7)
@@ -458,7 +460,8 @@ function Enemy:debug()
     --------------------------------------------------
     if DebugFlags.enemy.hitbox then
         StyleUtils.resetColor()
-        love.graphics.rectangle("line", self.pos.x, self.pos.y, self.w, self.h)
+        local drawY = self.pos.y - (self.spriteH - self.h)
+        love.graphics.rectangle("line", self.pos.x, drawY, self.w, self.spriteH)
     end
 
     StyleUtils.resetColor()

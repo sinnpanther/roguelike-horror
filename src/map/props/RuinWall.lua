@@ -9,15 +9,7 @@ function RuinWall:new(world, tx, ty, opts)
     opts.blocksVision   = true
     opts.type = "ruin"
 
-    RuinWall.super.new(
-            self,
-            world,
-            tx,
-            ty,
-            1, -- largeur en tiles
-            1, -- hauteur en tiles
-            opts
-    )
+    RuinWall.super.new(self, world, tx, ty, opts)
 end
 
 function RuinWall:draw()
