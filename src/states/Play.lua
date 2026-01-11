@@ -290,7 +290,7 @@ function Play:mousepressed(x, y, button)
 end
 
 function Play:debug()
-    if DebugFlags.enabled or DebugFlags.play.enabled then
+    if not DebugFlags.enabled or not DebugFlags.play.enabled then
         return
     end
 
@@ -303,6 +303,8 @@ function Play:debug()
             love.graphics.rectangle("line", x, y, w, h)
             love.graphics.print(items[i].type or "unknown", x, y - 15)
         end
+
+        StyleUtils.resetColor()
     end
 end
 

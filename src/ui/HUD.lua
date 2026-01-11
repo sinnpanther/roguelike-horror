@@ -38,7 +38,7 @@ function HUD:draw(level, displaySeed)
 end
 
 function HUD:debug()
-    if DebugFlags.enabled or DebugFlags.hud.enabled then
+    if not DebugFlags.enabled or not DebugFlags.hud.enabled then
         return
     end
 

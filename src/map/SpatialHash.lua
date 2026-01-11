@@ -108,7 +108,7 @@ end
 -- Debug
 -----------------------------------------------------
 function SpatialHash:debug()
-    if not DebugFlags.enabled and not DebugFlags.spatialHash.enabled then
+    if not DebugFlags.enabled or not DebugFlags.spatialHash.enabled then
         return
     end
 
